@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { ShieldAlert } from "lucide-react";
 import {
   FaCapsules,
   FaFacebook,
@@ -110,7 +111,20 @@ export default function Footer() {
           </div>
 
         </div>
+         {/* Medical Disclaimer */}
+<div className="mt-10 rounded-2xl border border-teal-800 bg-teal-900/50 p-5 flex items-start gap-3">
+  <ShieldAlert className="w-5 h-5 text-yellow-400 shrink-0 mt-0.5" />
 
+  <p className="text-sm text-teal-100/70 leading-relaxed">
+    <span className="font-semibold text-white">
+      Medical Disclaimer:
+    </span>{" "}
+    The information provided on MediBridge is generated dynamically for
+    informational purposes only. It is not a substitute for professional
+    medical advice, diagnosis, or treatment. Always consult a qualified
+    physician or pharmacist before starting any new medication or treatment.
+  </p>
+</div>
         <hr className="my-10 border-teal-800" />
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-gray-400 text-sm">
