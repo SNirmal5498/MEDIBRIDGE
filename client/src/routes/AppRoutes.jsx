@@ -7,6 +7,8 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
 import Medicine from "../pages/Medicine";
+import MedicineDetails from "../pages/MedicineDetails";
+import Compare from "../pages/Compare";
 import Cart from "../pages/Cart";
 import Orders from "../pages/Orders";
 import Favorites from "../pages/Favorites";
@@ -29,6 +31,8 @@ export default function AppRoutes() {
 
         {/* Main Features */}
         <Route path="/medicine" element={<Medicine />} />
+        <Route path="/medicine/:id" element={<MedicineDetails />} />
+        <Route path="/compare" element={<Compare />} />
         <Route path="/pharmacy" element={<Pharmacy />} />
         <Route path="/emergency" element={<Emergency />} />
         <Route path="/about" element={<About />} />

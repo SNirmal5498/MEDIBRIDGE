@@ -1,47 +1,79 @@
-import { motion } from "framer-motion";
-import { ShieldCheck, ShieldAlert, Building2, ArrowRight } from "lucide-react";
-import { formatINR } from "../../utils/helpers";
+import { useNavigate } from "react-router-dom";
+import { Star, Lock, ShoppingCart, GitCompare, Trophy, Sparkles, Tag } from "lucide-react";
+import Button from "../common/Button";
 
-export default function MedicineCard({ medicine, onSelect, index = 0 }) {
+export default function MedicineCard({ medicine, compareSelected, onToggleCompare, compareDisabled }) {
+  const navigate = useNavigate();
+
   return (
-    <motion.button
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.35, delay: Math.min(index, 8) * 0.04 }}
-      onClick={() => onSelect(medicine)}
-      className="card card-hover text-left p-5 flex flex-col h-full focus-visible:ring-2 focus-visible:ring-primary/40"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">{medicine.name}</p>
-          <h3 className="mt-0.5 font-display font-bold text-text text-lg">{medicine.brand}</h3>
+    <div className="card card-hover p-5 flex flex-col">
+      <div className="flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-wrap gap-1.5">
+            {medicine.badges.bestSeller && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-700">
+                <Trophy className="w-3 h-3" /> Best Seller
+              </span>
+            )}
+            {medicine.badges.topRated && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full bg-primary-50 text-primary-hover">
+                <Sparkles className="w-3 h-3" /> Top Rated
+              </span>
+            )}
+            {medicine.badges.lowestPrice && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full bg-blue-50 text-blue-700">
+                <Tag className="w-3 h-3" /> Lowest Price
+              </span>
+            )}
+          </div>
+          <span
+            className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${
+              medicine.otc ? "bg-primary-50 text-primary-hover" : "bg-danger-50 text-danger"
+            }`}
+          >
+            {medicine.otc ? "OTC" : "Prescription"}
+          </span>
         </div>
-        <span
-          className={`shrink-0 flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full
-            ${medicine.otc ? "bg-primary-50 text-primary-hover" : "bg-warning-50 text-warning"}`}
-        >
-          {medicine.otc ? <ShieldCheck className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
-          {medicine.otc ? "OTC" : "Rx"}
-        </span>
+
+        <h3 className="mt-3 font-display font-bold text-text">{medicine.brand}</h3>
+        <p className="text-sm text-text-muted">{medicine.genericName} · {medicine.strength}</p>
+        <p className="text-xs text-text-muted mt-1">{medicine.manufacturer}</p>
+
+        <div className="flex items-center gap-1 mt-2">
+          <Star className="w-3.5 h-3.5 text-warning fill-warning" />
+          <span className="text-sm font-semibold text-text">{medicine.rating}</span>
+        </div>
+
+        <p className="mt-3 font-display font-extrabold text-lg text-primary-hover">₹{medicine.price}</p>
       </div>
 
-      <div className="mt-4 space-y-1.5 flex-1">
-        <p className="text-sm text-text-muted">Strength: <span className="text-text font-medium">{medicine.strength}</span></p>
-        <p className="flex items-center gap-1.5 text-sm text-text-muted">
-          <Building2 className="w-3.5 h-3.5 shrink-0" />
-          {medicine.manufacturer}
-        </p>
-      </div>
+      <div className="mt-auto pt-4">
+        <div className="flex gap-2">
+          <Button variant="primary" size="sm" className="flex-1" onClick={() => navigate(`/medicine/${medicine.id}`)}>
+            View Details
+          </Button>
+          <Button
+            variant={compareSelected ? "primary" : "secondary"}
+            size="sm"
+            icon={GitCompare}
+            className="flex-1"
+            disabled={!compareSelected && compareDisabled}
+            onClick={() => onToggleCompare(medicine.id)}
+          >
+            {compareSelected ? "Selected" : "Compare"}
+          </Button>
+        </div>
 
-      <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
-        <span className="font-display font-bold text-text">
-          {medicine.otc ? formatINR(medicine.price) : "Rx required"}
-        </span>
-        <span className="flex items-center gap-1 text-xs font-semibold text-primary-hover">
-          View details <ArrowRight className="w-3.5 h-3.5" />
-        </span>
+        {medicine.otc ? (
+          <Button variant="secondary" size="sm" icon={ShoppingCart} className="w-full mt-2">
+            Order Now
+          </Button>
+        ) : (
+          <div className="w-full mt-2 flex items-center justify-center gap-1.5 text-xs font-semibold text-text-muted bg-slate-100 rounded-xl py-2.5">
+            <Lock className="w-3.5 h-3.5" /> Prescription Required
+          </div>
+        )}
       </div>
-    </motion.button>
+    </div>
   );
 }
