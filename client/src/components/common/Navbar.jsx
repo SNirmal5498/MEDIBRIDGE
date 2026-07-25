@@ -6,7 +6,6 @@ import {
   Scale,
   MapPin,
   Siren,
-  Info,
   Package,
   Heart,
   User,
@@ -20,25 +19,34 @@ import { NAV_LINKS, AUTH_NAV_LINKS, LANGUAGES } from "../../utils/constants";
 import { useAuth } from "../../hooks/useAuth";
 import Button from "./Button";
 
-const ICONS = { Home, Scale, MapPin, Siren, Info, Package, Heart, User };
+const ICONS = { Home, Scale, MapPin, Siren, Package, Heart, User };
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [langOpen, setLangOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [language, setLanguage] = useState(LANGUAGES[0]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const langRef = useRef(null);
+  const userMenuRef = useRef(null);
 
   useEffect(() => {
     function handleClick(e) {
       if (langRef.current && !langRef.current.contains(e.target)) setLangOpen(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setUserMenuOpen(false);
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
   const links = isAuthenticated ? [...NAV_LINKS, ...AUTH_NAV_LINKS] : NAV_LINKS;
+
+  function handleLogout() {
+    logout();
+    setUserMenuOpen(false);
+    navigate("/");
+  }
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-border">
@@ -105,26 +113,57 @@ export default function Navbar() {
             </div>
 
             {isAuthenticated ? (
-              <div className="flex items-center gap-2 pl-3 border-l border-border">
-                <div className="grid place-items-center w-9 h-9 rounded-full bg-primary-100 text-primary-hover font-semibold text-sm">
-                  {user?.name?.[0]?.toUpperCase() ?? "U"}
-                </div>
-                <div className="hidden lg:block leading-tight">
-                  <p className="text-sm font-semibold text-text">{user?.name ?? "User"}</p>
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-primary-hover bg-primary-50 px-1.5 py-0.5 rounded">
-                    {user?.role ?? "User"}
-                  </span>
-                </div>
+              <div className="relative pl-3 border-l border-border" ref={userMenuRef}>
                 <button
-                  onClick={() => {
-                    logout();
-                    navigate("/");
-                  }}
-                  aria-label="Log out"
-                  className="grid place-items-center w-9 h-9 rounded-lg text-danger bg-danger-50 hover:bg-danger/10 transition-colors ml-1"
+                  onClick={() => setUserMenuOpen((v) => !v)}
+                  className="flex items-center gap-2 rounded-lg hover:bg-slate-100 pr-2 py-1 transition-colors"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <div className="grid place-items-center w-9 h-9 rounded-full bg-primary-100 text-primary-hover font-semibold text-sm shrink-0">
+                    {user?.name?.[0]?.toUpperCase() ?? "U"}
+                  </div>
+                  <div className="hidden lg:block leading-tight text-left">
+                    <p className="text-sm font-semibold text-text">{user?.name ?? "User"}</p>
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-primary-hover bg-primary-50 px-1.5 py-0.5 rounded">
+                      {user?.role ?? "User"}
+                    </span>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-text-muted shrink-0 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
                 </button>
+
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-52 py-1.5 card z-10">
+                    <NavLink
+                      to="/profile"
+                      onClick={() => setUserMenuOpen(false)}
+                      className={({ isActive }) =>
+                        `flex items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors
+                        ${isActive ? "text-primary-hover font-semibold bg-primary-50" : "text-text hover:bg-primary-50"}`
+                      }
+                    >
+                      <User className="w-4 h-4" />
+                      Profile
+                    </NavLink>
+                    <NavLink
+                      to="/favorites"
+                      onClick={() => setUserMenuOpen(false)}
+                      className={({ isActive }) =>
+                        `flex items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors
+                        ${isActive ? "text-primary-hover font-semibold bg-primary-50" : "text-text hover:bg-primary-50"}`
+                      }
+                    >
+                      <Heart className="w-4 h-4" />
+                      My Medications
+                    </NavLink>
+                    <div className="my-1.5 border-t border-border" />
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-danger hover:bg-danger-50 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center gap-2 pl-3 border-l border-border">
@@ -169,6 +208,34 @@ export default function Navbar() {
               </NavLink>
             );
           })}
+
+          {isAuthenticated && (
+            <>
+              <NavLink
+                to="/profile"
+                onClick={() => setMobileOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-sm font-medium
+                  ${isActive ? "bg-primary-50 text-primary-hover" : "text-text-muted hover:bg-slate-100"}`
+                }
+              >
+                <User className="w-4 h-4" />
+                Profile
+              </NavLink>
+              <NavLink
+                to="/favorites"
+                onClick={() => setMobileOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-sm font-medium
+                  ${isActive ? "bg-primary-50 text-primary-hover" : "text-text-muted hover:bg-slate-100"}`
+                }
+              >
+                <Heart className="w-4 h-4" />
+                My Medications
+              </NavLink>
+            </>
+          )}
+
           <div className="pt-3 mt-3 border-t border-border flex gap-2">
             {isAuthenticated ? (
               <Button
@@ -199,4 +266,4 @@ export default function Navbar() {
       )}
     </header>
   );
-}
+}     

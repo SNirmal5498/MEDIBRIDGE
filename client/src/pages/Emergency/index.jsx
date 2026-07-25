@@ -1,12 +1,9 @@
-import { motion } from "framer-motion";
 import { ShieldAlert } from "lucide-react";
 import {
-  EMERGENCY_ACTIONS,
   FIRST_AID_GUIDES,
   EMERGENCY_HOSPITALS,
   EMERGENCY_MEDICINES,
 } from "../../utils/emergencyData";
-import EmergencyActionCard from "../../components/emergency/EmergencyActionCard";
 import FirstAidCard from "../../components/emergency/FirstAidCard";
 import HospitalCard from "../../components/emergency/HospitalCard";
 import EmergencyMedicineCard from "../../components/emergency/EmergencyMedicineCard";
@@ -24,23 +21,8 @@ export default function Emergency() {
         </p>
       </div>
 
-      {/* Emergency action cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {EMERGENCY_ACTIONS.map((action, i) => (
-          <motion.div
-            key={action.id}
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: i * 0.06 }}
-          >
-            <EmergencyActionCard action={action} />
-          </motion.div>
-        ))}
-      </section>
-
       {/* First aid guides */}
-      <section className="mt-14">
+      <section>
         <h2 className="font-display font-bold text-xl text-text mb-5">First Aid Guides</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {FIRST_AID_GUIDES.map((guide) => (
@@ -75,6 +57,18 @@ export default function Emergency() {
         <SafetyTips />
       </section>
 
+      {/* Disclaimer */}
+      <section className="mt-14">
+        <div className="rounded-2xl border border-warning/30 bg-warning-50 p-5 flex items-start gap-3">
+          <ShieldAlert className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+          <p className="text-sm text-text leading-relaxed">
+            <span className="font-semibold">Medical Disclaimer: </span>
+            the emergency information provided by MediBridge is intended for informational purposes only
+            and should not replace professional medical advice or emergency medical services. In case of a
+            serious emergency, immediately contact your local emergency services or visit the nearest hospital.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }

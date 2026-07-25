@@ -445,3 +445,26 @@ export function getRecentlyViewed(limit = 4) {
   const ids = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
   return ids.map((id) => getMedicineById(id)).filter(Boolean).slice(0, limit);
 }
+
+const FAVORITES_KEY = "medibridge_favorites";
+
+export function getFavoriteIds() {
+  return JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]");
+}
+
+export function isFavorite(id) {
+  return getFavoriteIds().includes(id);
+}
+
+export function toggleFavorite(id) {
+  const current = getFavoriteIds();
+  const updated = current.includes(id)
+    ? current.filter((x) => x !== id)
+    : [...current, id];
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
+  return updated;
+}
+
+export function getFavoriteMedicines() {
+  return getFavoriteIds().map((id) => getMedicineById(id)).filter(Boolean);
+}

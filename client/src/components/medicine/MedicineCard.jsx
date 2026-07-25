@@ -1,14 +1,33 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Star, Lock, ShoppingCart, GitCompare, Trophy, Sparkles, Tag } from "lucide-react";
+import { Star, Lock, ShoppingCart, GitCompare, Trophy, Sparkles, Tag, Heart } from "lucide-react";
 import Button from "../common/Button";
+import { isFavorite, toggleFavorite } from "../../utils/medicineData";
 
 export default function MedicineCard({ medicine, compareSelected, onToggleCompare, compareDisabled }) {
   const navigate = useNavigate();
+  const [favorited, setFavorited] = useState(() => isFavorite(medicine.id));
+
+  function handleFavoriteClick(e) {
+    e.stopPropagation();
+    toggleFavorite(medicine.id);
+    setFavorited((v) => !v);
+  }
 
   return (
-    <div className="card card-hover p-5 flex flex-col">
+    <div className="card card-hover p-5 flex flex-col relative">
+      <button
+        onClick={handleFavoriteClick}
+        aria-label={favorited ? "Remove from My Medications" : "Add to My Medications"}
+        className={`absolute top-4 right-4 grid place-items-center w-8 h-8 rounded-full transition-colors ${
+          favorited ? "bg-danger-50 text-danger" : "bg-slate-100 text-text-muted hover:text-danger hover:bg-danger-50"
+        }`}
+      >
+        <Heart className={`w-4 h-4 ${favorited ? "fill-danger" : ""}`} />
+      </button>
+
       <div className="flex-1">
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start justify-between gap-2 pr-9">
           <div className="flex flex-wrap gap-1.5">
             {medicine.badges.bestSeller && (
               <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-700">

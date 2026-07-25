@@ -6,13 +6,10 @@ export const NAV_LINKS = [
   { label: "Compare Medicines", path: "/medicine", icon: "Scale" },
   { label: "Nearby Pharmacy", path: "/pharmacy", icon: "MapPin" },
   { label: "Emergency", path: "/emergency", icon: "Siren" },
-  { label: "About", path: "/about", icon: "Info" },
 ];
 
 export const AUTH_NAV_LINKS = [
   { label: "Orders", path: "/orders", icon: "Package" },
-  { label: "Favorites", path: "/favorites", icon: "Heart" },
-  { label: "Profile", path: "/profile", icon: "User" },
 ];
 
 export const LANGUAGES = [

@@ -14,7 +14,6 @@ import Orders from "../pages/Orders";
 import Favorites from "../pages/Favorites";
 import Profile from "../pages/Profile";
 import Admin from "../pages/Admin";
-import About from "../pages/About";
 import Pharmacy from "../pages/Pharmacy";
 import Emergency from "../pages/Emergency";
 import NotFound from "../pages/NotFound";
@@ -35,7 +34,6 @@ export default function AppRoutes() {
         <Route path="/compare" element={<Compare />} />
         <Route path="/pharmacy" element={<Pharmacy />} />
         <Route path="/emergency" element={<Emergency />} />
-        <Route path="/about" element={<About />} />
 
         {/* User Routes */}
         <Route path="/dashboard" element={<Dashboard />} />
