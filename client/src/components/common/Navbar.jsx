@@ -17,16 +17,17 @@ import {
 } from "lucide-react";
 import { NAV_LINKS, AUTH_NAV_LINKS, LANGUAGES } from "../../utils/constants";
 import { useAuth } from "../../hooks/useAuth";
+import { useLanguage } from "../../hooks/useLanguage";
 import Button from "./Button";
 
 const ICONS = { Home, Scale, MapPin, Siren, Package, Heart, User };
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const [langOpen, setLangOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [language, setLanguage] = useState(LANGUAGES[0]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const langRef = useRef(null);
   const userMenuRef = useRef(null);
@@ -76,7 +77,7 @@ export default function Navbar() {
                   }
                 >
                   <Icon className="w-4 h-4" />
-                  {link.label}
+                  {t(link.labelKey)}
                 </NavLink>
               );
             })}
@@ -141,7 +142,7 @@ export default function Navbar() {
                       }
                     >
                       <User className="w-4 h-4" />
-                      Profile
+                      {t("nav.profile")}
                     </NavLink>
                     <NavLink
                       to="/favorites"
@@ -152,7 +153,7 @@ export default function Navbar() {
                       }
                     >
                       <Heart className="w-4 h-4" />
-                      My Medications
+                      {t("nav.myMedications")}
                     </NavLink>
                     <div className="my-1.5 border-t border-border" />
                     <button
@@ -160,7 +161,7 @@ export default function Navbar() {
                       className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-danger hover:bg-danger-50 transition-colors"
                     >
                       <LogOut className="w-4 h-4" />
-                      Logout
+                      {t("nav.logout")}
                     </button>
                   </div>
                 )}
@@ -168,10 +169,10 @@ export default function Navbar() {
             ) : (
               <div className="flex items-center gap-2 pl-3 border-l border-border">
                 <Button as={NavLink} to="/login" variant="ghost" size="sm">
-                  Login
+                  {t("nav.login")}
                 </Button>
                 <Button as={NavLink} to="/register" variant="primary" size="sm">
-                  Register
+                  {t("nav.register")}
                 </Button>
               </div>
             )}
@@ -204,7 +205,7 @@ export default function Navbar() {
                 }
               >
                 <Icon className="w-4 h-4" />
-                {link.label}
+                {t(link.labelKey)}
               </NavLink>
             );
           })}
@@ -220,7 +221,7 @@ export default function Navbar() {
                 }
               >
                 <User className="w-4 h-4" />
-                Profile
+                {t("nav.profile")}
               </NavLink>
               <NavLink
                 to="/favorites"
@@ -231,7 +232,7 @@ export default function Navbar() {
                 }
               >
                 <Heart className="w-4 h-4" />
-                My Medications
+                {t("nav.myMedications")}
               </NavLink>
             </>
           )}
@@ -249,15 +250,15 @@ export default function Navbar() {
                 icon={LogOut}
                 className="w-full"
               >
-                Logout
+                {t("nav.logout")}
               </Button>
             ) : (
               <>
                 <Button as={NavLink} to="/login" variant="secondary" size="sm" className="flex-1">
-                  Login
+                  {t("nav.login")}
                 </Button>
                 <Button as={NavLink} to="/register" variant="primary" size="sm" className="flex-1">
-                  Register
+                  {t("nav.register")}
                 </Button>
               </>
             )}
@@ -266,4 +267,4 @@ export default function Navbar() {
       )}
     </header>
   );
-}     
+}

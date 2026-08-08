@@ -2,14 +2,14 @@
 // as the corresponding backend endpoints become available.
 
 export const NAV_LINKS = [
-  { label: "Home", path: "/", icon: "Home" },
-  { label: "Compare Medicines", path: "/medicine", icon: "Scale" },
-  { label: "Nearby Pharmacy", path: "/pharmacy", icon: "MapPin" },
-  { label: "Emergency", path: "/emergency", icon: "Siren" },
+  { labelKey: "nav.home", path: "/", icon: "Home" },
+  { labelKey: "nav.compareMedicines", path: "/medicine", icon: "Scale" },
+  { labelKey: "nav.nearbyPharmacy", path: "/pharmacy", icon: "MapPin" },
+  { labelKey: "nav.emergency", path: "/emergency", icon: "Siren" },
 ];
 
 export const AUTH_NAV_LINKS = [
-  { label: "Orders", path: "/orders", icon: "Package" },
+  { labelKey: "nav.orders", path: "/orders", icon: "Package" },
 ];
 
 export const LANGUAGES = [
