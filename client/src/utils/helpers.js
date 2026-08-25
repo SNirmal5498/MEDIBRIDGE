@@ -8,6 +8,26 @@ export function formatINR(amount) {
   return `₹${Number(amount).toLocaleString("en-IN")}`;
 }
 
+export function formatMemberSince(date) {
+  if (!date) return "—";
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "—";
+  return parsed.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+}
+
+export function formatDateTime(date) {
+  if (!date) return "—";
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "—";
+  return parsed.toLocaleString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 /**
  * Group a flat list of medicines by their generic `name`, so brand
  * alternatives (e.g. Crocin / Dolo / Calpol, all "Paracetamol") sit together.

@@ -4,12 +4,17 @@ const authMiddleware = require("../middleware/authMiddleware");
 const {
     registerUser,
     loginUser,
-    getProfile
+    getProfile,
+    updateProfile,
+    changePassword,
+    deleteAccount
 } = require("../controllers/authController");
-// Register
+
 router.post("/register", registerUser);
-router.get("/profile", authMiddleware, getProfile);
-// Login
 router.post("/login", loginUser);
+router.get("/profile", authMiddleware, getProfile);
+router.put("/profile", authMiddleware, updateProfile);
+router.put("/password", authMiddleware, changePassword);
+router.delete("/account", authMiddleware, deleteAccount);
 
 module.exports = router;

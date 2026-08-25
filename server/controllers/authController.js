@@ -1,12 +1,31 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+
+function serializeUser(user) {
+    return {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone || "",
+        dateOfBirth: user.dateOfBirth || "",
+        gender: user.gender || "",
+        location: user.location || "",
+        preferredLanguage: user.preferredLanguage,
+        profilePicture: user.profilePicture || "",
+        role: user.role,
+        accountStatus: user.accountStatus || "active",
+        emailVerified: Boolean(user.emailVerified),
+        lastLogin: user.lastLogin || null,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+    };
+}
 
 const registerUser = async (req, res) => {
     try {
-        // Read data from request body
         const { name, email, password } = req.body;
 
-        // Check if all fields are provided
         if (!name || !email || !password) {
             return res.status(400).json({
                 success: false,
@@ -14,7 +33,6 @@ const registerUser = async (req, res) => {
             });
         }
 
-        // Check if user already exists
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
@@ -24,20 +42,16 @@ const registerUser = async (req, res) => {
             });
         }
 
-        // Encrypt password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create new user
         const newUser = new User({
             name,
             email,
             password: hashedPassword
         });
 
-        // Save user to MongoDB
         await newUser.save();
 
-        // Send success response
         res.status(201).json({
             success: true,
             message: "User registered successfully"
@@ -53,15 +67,10 @@ const registerUser = async (req, res) => {
     }
 };
 
-const jwt = require("jsonwebtoken");
-
 const loginUser = async (req, res) => {
     try {
-
-        // Read email and password
         const { email, password } = req.body;
 
-        // Check if fields are empty
         if (!email || !password) {
             return res.status(400).json({
                 success: false,
@@ -69,10 +78,8 @@ const loginUser = async (req, res) => {
             });
         }
 
-        // Find user by email
         const user = await User.findOne({ email });
 
-        // User not found
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -80,18 +87,18 @@ const loginUser = async (req, res) => {
             });
         }
 
-        // Compare password
         const isMatch = await bcrypt.compare(password, user.password);
 
-        // Wrong password
         if (!isMatch) {
-            return res.status(401).json({
+            return res.status(400).json({
                 success: false,
                 message: "Invalid password"
             });
         }
 
-        // Generate JWT Token
+        user.lastLogin = new Date();
+        await user.save();
+
         const token = jwt.sign(
             {
                 id: user._id
@@ -102,16 +109,11 @@ const loginUser = async (req, res) => {
             }
         );
 
-        // Success Response
         res.status(200).json({
             success: true,
             message: "Login Successful",
             token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email
-            }
+            user: serializeUser(user)
         });
 
     } catch (error) {
@@ -126,7 +128,6 @@ const loginUser = async (req, res) => {
 
 const getProfile = async (req, res) => {
     try {
-
         const user = await User.findById(req.user.id).select("-password");
 
         if (!user) {
@@ -138,23 +139,140 @@ const getProfile = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            user
+            user: serializeUser(user)
         });
 
     } catch (error) {
-
         console.error(error);
 
         res.status(500).json({
             success: false,
             message: "Internal Server Error"
         });
+    }
+};
 
+const updateProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        const allowed = ["name", "phone", "dateOfBirth", "gender", "location", "preferredLanguage", "profilePicture"];
+        for (const field of allowed) {
+            if (req.body[field] !== undefined) {
+                user[field] = req.body[field];
+            }
+        }
+
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Profile updated successfully",
+            user: serializeUser(user)
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+};
+
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Current password and new password are required"
+            });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: "New password must be at least 6 characters"
+            });
+        }
+
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+
+        if (!isMatch) {
+            return res.status(400).json({
+                success: false,
+                message: "Current password is incorrect"
+            });
+        }
+
+        user.password = await bcrypt.hash(newPassword, 10);
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Password updated successfully"
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+};
+
+const deleteAccount = async (req, res) => {
+    try {
+        const user = await User.findByIdAndDelete(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Account deleted successfully"
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
     }
 };
 
 module.exports = {
     registerUser,
     loginUser,
-    getProfile
+    getProfile,
+    updateProfile,
+    changePassword,
+    deleteAccount
 };

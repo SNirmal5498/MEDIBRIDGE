@@ -21,6 +21,29 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
+    phone: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    dateOfBirth: {
+      type: String,
+      default: "",
+    },
+
+    gender: {
+      type: String,
+      enum: ["", "male", "female", "other", "prefer_not_to_say"],
+      default: "",
+    },
+
+    location: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     preferredLanguage: {
       type: String,
       default: "English",
@@ -35,6 +58,22 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["user", "admin"],
       default: "user",
+    },
+
+    accountStatus: {
+      type: String,
+      enum: ["active", "suspended"],
+      default: "active",
+    },
+
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    lastLogin: {
+      type: Date,
+      default: null,
     },
   },
   {
