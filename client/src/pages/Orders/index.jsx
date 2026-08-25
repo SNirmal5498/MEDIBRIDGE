@@ -1,19 +1,46 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
-import { getAllOrders, getOrderById } from "../../utils/orderData";
+import { orderService } from "../../services/orderService";
 import OrderSummaryCard from "../../components/orders/OrderSummaryCard";
 
 export default function Orders() {
-  const orders = getAllOrders();
-  const [selectedId, setSelectedId] = useState(orders[0]?.id || "");
+  const [orders, setOrders] = useState([]);
+  const [selectedId, setSelectedId] = useState("");
   const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const order = getOrderById(selectedId);
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const loadOrders = async () => {
+    try {
+      const response = await orderService.getUserOrders();
+      setOrders(response.orders || []);
+      if (response.orders && response.orders.length > 0) {
+        setSelectedId(response.orders[0].id);
+      }
+    } catch (error) {
+      console.error("Failed to load orders:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const order = orders.find((o) => o.id === selectedId);
 
   function handleSearch(e) {
     e.preventDefault();
     const match = orders.find((o) => o.id.toLowerCase() === query.trim().toLowerCase());
     if (match) setSelectedId(match.id);
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="text-center text-text-muted">Loading orders...</div>
+      </div>
+    );
   }
 
   return (
@@ -36,24 +63,30 @@ export default function Orders() {
 
       <div className="mt-4 flex flex-wrap gap-2">
         <span className="text-xs font-semibold text-text-muted uppercase self-center mr-1">Your orders:</span>
-        {orders.map((o) => (
-          <button
-            key={o.id}
-            onClick={() => setSelectedId(o.id)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-              selectedId === o.id ? "bg-primary text-white" : "bg-slate-100 text-text-muted hover:bg-slate-200"
-            }`}
-          >
-            {o.id}
-          </button>
-        ))}
+        {orders.length === 0 ? (
+          <span className="text-sm text-text-muted">No orders yet</span>
+        ) : (
+          orders.map((o) => (
+            <button
+              key={o.id}
+              onClick={() => setSelectedId(o.id)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                selectedId === o.id ? "bg-primary text-white" : "bg-slate-100 text-text-muted hover:bg-slate-200"
+              }`}
+            >
+              {o.id}
+            </button>
+          ))
+        )}
       </div>
 
       <div className="mt-8">
         {order ? (
           <OrderSummaryCard order={order} />
         ) : (
-          <p className="text-center text-text-muted text-sm py-16">No order found with that ID.</p>
+          <p className="text-center text-text-muted text-sm py-16">
+            {orders.length === 0 ? "You haven't placed any orders yet." : "No order found with that ID."}
+          </p>
         )}
       </div>
     </div>

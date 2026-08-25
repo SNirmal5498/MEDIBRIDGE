@@ -3,9 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Star, Lock, ShoppingCart, GitCompare, Trophy, Sparkles, Tag, Heart } from "lucide-react";
 import Button from "../common/Button";
 import { isFavorite, toggleFavorite } from "../../utils/medicineData";
+import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
+import { PHARMACIES } from "../../utils/constants";
 
 export default function MedicineCard({ medicine, compareSelected, onToggleCompare, compareDisabled }) {
   const navigate = useNavigate();
+  const { addToCart } = useCart();
+  const { isAuthenticated } = useAuth();
   const [favorited, setFavorited] = useState(() => isFavorite(medicine.id));
 
   function handleFavoriteClick(e) {
@@ -13,6 +18,19 @@ export default function MedicineCard({ medicine, compareSelected, onToggleCompar
     toggleFavorite(medicine.id);
     setFavorited((v) => !v);
   }
+
+  const handleOrderNow = () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    if (!medicine.otc) return;
+
+    const defaultPharmacy = PHARMACIES[0];
+    addToCart(medicine, defaultPharmacy, 1);
+    navigate("/checkout");
+  };
 
   return (
     <div className="card card-hover p-5 flex flex-col relative">
@@ -84,7 +102,7 @@ export default function MedicineCard({ medicine, compareSelected, onToggleCompar
         </div>
 
         {medicine.otc ? (
-          <Button variant="secondary" size="sm" icon={ShoppingCart} className="w-full mt-2">
+          <Button variant="secondary" size="sm" icon={ShoppingCart} onClick={handleOrderNow} className="w-full mt-2">
             Order Now
           </Button>
         ) : (

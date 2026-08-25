@@ -17,6 +17,7 @@ function serializeUser(user) {
         accountStatus: user.accountStatus || "active",
         emailVerified: Boolean(user.emailVerified),
         lastLogin: user.lastLogin || null,
+        address: user.address || {},
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
     };
@@ -167,6 +168,16 @@ const updateProfile = async (req, res) => {
         for (const field of allowed) {
             if (req.body[field] !== undefined) {
                 user[field] = req.body[field];
+            }
+        }
+
+        // Handle address updates
+        if (req.body.address) {
+            const addressFields = ["houseFlat", "streetRoad", "area", "city", "state", "pincode"];
+            for (const field of addressFields) {
+                if (req.body.address[field] !== undefined) {
+                    user.address[field] = req.body.address[field];
+                }
             }
         }
 

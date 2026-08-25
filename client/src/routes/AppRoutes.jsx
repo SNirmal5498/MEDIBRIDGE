@@ -10,6 +10,7 @@ import Medicine from "../pages/Medicine";
 import MedicineDetails from "../pages/MedicineDetails";
 import Compare from "../pages/Compare";
 import Cart from "../pages/Cart";
+import Checkout from "../pages/Checkout";
 import Orders from "../pages/Orders";
 import Favorites from "../pages/Favorites";
 import Profile from "../pages/Profile";
@@ -38,6 +39,7 @@ export default function AppRoutes() {
         {/* User Routes */}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/profile" element={<Profile />} />

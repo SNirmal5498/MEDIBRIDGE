@@ -13,6 +13,10 @@ import {
   XCircle,
   Building2,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
+import { getMedicineById } from "../../utils/medicineData";
 import Button from "../common/Button";
 
 const AVAILABILITY = {
@@ -37,6 +41,24 @@ export default function PharmacyDetailCard({ pharmacy }) {
   const availability = AVAILABILITY[pharmacy.availability];
   const AvailabilityIcon = availability.icon;
   const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(pharmacy.address)}`;
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
+  const { isAuthenticated } = useAuth();
+
+  const handleOrderNow = () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    if (!pharmacy.otc) return;
+
+    const medicine = getMedicineById(pharmacy.medicineName);
+    if (medicine) {
+      addToCart(medicine, pharmacy, 1);
+      navigate("/checkout");
+    }
+  };
 
   return (
     <div className="card card-hover p-5 flex flex-col">
@@ -140,7 +162,7 @@ export default function PharmacyDetailCard({ pharmacy }) {
         </div>
 
         {pharmacy.otc ? (
-          <Button variant="primary" size="sm" icon={ShoppingCart} className="w-full">
+          <Button variant="primary" size="sm" icon={ShoppingCart} onClick={handleOrderNow} className="w-full">
             Order Now
           </Button>
         ) : (

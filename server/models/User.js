@@ -75,6 +75,34 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    // Delivery address fields
+    address: {
+      houseFlat: {
+        type: String,
+        default: "",
+      },
+      streetRoad: {
+        type: String,
+        default: "",
+      },
+      area: {
+        type: String,
+        default: "",
+      },
+      city: {
+        type: String,
+        default: "",
+      },
+      state: {
+        type: String,
+        default: "",
+      },
+      pincode: {
+        type: String,
+        default: "",
+      },
+    },
   },
   {
     timestamps: true,

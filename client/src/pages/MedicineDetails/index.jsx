@@ -8,6 +8,8 @@ import {
   addRecentlyViewed,
 } from "../../utils/medicineData";
 import { PHARMACIES } from "../../utils/constants";
+import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
 import Button from "../../components/common/Button";
 import MedicineCard from "../../components/medicine/MedicineCard";
 import PharmacyCard from "../../components/common/PharmacyCard";
@@ -26,6 +28,8 @@ export default function MedicineDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const medicine = getMedicineById(id);
+  const { addToCart } = useCart();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (medicine) addRecentlyViewed(medicine.id);
@@ -33,6 +37,19 @@ export default function MedicineDetails() {
 
   const alternatives = useMemo(() => getAlternatives(medicine), [medicine]);
   const related = useMemo(() => getRelatedMedicines(medicine, 4), [medicine]);
+
+  const handleOrderNow = () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    if (!medicine.otc) return;
+
+    const defaultPharmacy = PHARMACIES[0];
+    addToCart(medicine, defaultPharmacy, 1);
+    navigate("/checkout");
+  };
 
   if (!medicine) return <NotFound />;
 
@@ -93,7 +110,7 @@ export default function MedicineDetails() {
 
           <div className="mt-6 flex flex-wrap gap-3">
             {medicine.otc ? (
-              <Button variant="primary" icon={ShoppingCart}>Order Now</Button>
+              <Button variant="primary" icon={ShoppingCart} onClick={handleOrderNow}>Order Now</Button>
             ) : (
               <Button variant="secondary" icon={Lock} disabled>Prescription Required</Button>
             )}

@@ -1,6 +1,38 @@
 import { MapPin, Calendar } from "lucide-react";
 import OrderTimeline from "./OrderTimeline";
 
+function formatDate(dateString) {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatDateTime(dateString) {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  return date.toLocaleString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function formatAddress(deliveryAddress) {
+  if (!deliveryAddress) return "No address provided";
+  const { houseFlat, streetRoad, area, city, state, pincode } = deliveryAddress;
+  const parts = [houseFlat, streetRoad].filter(Boolean).join(", ");
+  const location = [area, city].filter(Boolean).join(", ");
+  const region = [state, pincode].filter(Boolean).join(" - ");
+  return [parts, location, region].filter(Boolean).join("\n");
+}
+
 export default function OrderSummaryCard({ order }) {
   const total = order.items.reduce((sum, item) => sum + item.price * item.qty, 0);
 
@@ -13,7 +45,7 @@ export default function OrderSummaryCard({ order }) {
         </div>
         <div className="flex items-center gap-1.5 text-sm text-text-muted">
           <Calendar className="w-4 h-4 shrink-0" />
-          Placed on {order.placedOn}
+          Placed on {formatDateTime(order.placedOn)}
         </div>
       </div>
 
@@ -40,13 +72,13 @@ export default function OrderSummaryCard({ order }) {
 
         <div>
           <p className="text-sm font-semibold text-text mb-2">Delivery Address</p>
-          <p className="flex items-start gap-2 text-sm text-text-muted">
+          <p className="flex items-start gap-2 text-sm text-text-muted whitespace-pre-line">
             <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
-            {order.address}
+            {formatAddress(order.deliveryAddress)}
           </p>
           <p className="text-sm text-text-muted mt-3">
             <span className="font-semibold text-text">Estimated delivery: </span>
-            {order.estimatedDelivery}
+            {formatDate(order.estimatedDelivery)}
           </p>
         </div>
       </div>
