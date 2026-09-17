@@ -2,17 +2,20 @@ import { Link } from "react-router-dom";
 import { Heart, Trash2 } from "lucide-react";
 import Button from "../common/Button";
 import { formatINR } from "../../utils/helpers";
+import { useLanguage } from "../../hooks/useLanguage";
 
 export default function SavedMedicines({ medicines, onRemove }) {
+  const { t } = useLanguage();
+
   return (
     <section>
       <div className="flex items-end justify-between gap-3 mb-5">
         <div>
-          <h2 className="font-display font-bold text-xl text-text">Saved Medicines</h2>
-          <p className="mt-1 text-sm text-text-muted">Medicines you saved from Compare and search.</p>
+          <h2 className="font-display font-bold text-xl text-text">{t("profile.savedMedicines")}</h2>
+          <p className="mt-1 text-sm text-text-muted">{t("profile.savedMedicinesSubtitle")}</p>
         </div>
         <Button as={Link} to="/favorites" variant="ghost" size="sm">
-          View all
+          {t("categories.viewAll")}
         </Button>
       </div>
 
@@ -21,9 +24,9 @@ export default function SavedMedicines({ medicines, onRemove }) {
           <div className="mx-auto grid place-items-center w-12 h-12 rounded-2xl bg-primary-50 text-primary-hover mb-3">
             <Heart className="w-5 h-5" />
           </div>
-          <p className="text-sm text-text-muted">You haven't saved any medicines yet.</p>
+          <p className="text-sm text-text-muted">{t("favorites.empty")}</p>
           <Button as={Link} to="/medicine" variant="primary" size="sm" className="mt-4 inline-flex">
-            Browse Medicines
+            {t("favorites.browse")}
           </Button>
         </div>
       ) : (
@@ -37,7 +40,7 @@ export default function SavedMedicines({ medicines, onRemove }) {
                     medicine.otc ? "bg-primary-50 text-primary-hover" : "bg-danger-50 text-danger"
                   }`}
                 >
-                  {medicine.otc ? "OTC" : "Prescription"}
+                  {medicine.otc ? t("medicine.otc") : t("medicine.prescription")}
                 </span>
               </div>
               <p className="mt-1 text-sm text-text-muted">
@@ -48,7 +51,7 @@ export default function SavedMedicines({ medicines, onRemove }) {
               </p>
               <div className="mt-auto pt-4 flex gap-2">
                 <Button as={Link} to={`/medicine/${medicine.id}`} variant="primary" size="sm" className="flex-1">
-                  View Details
+                  {t("medicine.viewDetails")}
                 </Button>
                 <Button
                   type="button"
@@ -58,7 +61,7 @@ export default function SavedMedicines({ medicines, onRemove }) {
                   onClick={() => onRemove(medicine.id)}
                   aria-label={`Remove ${medicine.brand}`}
                 >
-                  Remove
+                  {t("compare.remove")}
                 </Button>
               </div>
             </article>
@@ -68,3 +71,4 @@ export default function SavedMedicines({ medicines, onRemove }) {
     </section>
   );
 }
+

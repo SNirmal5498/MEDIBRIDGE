@@ -7,8 +7,18 @@ export const medicineService = {
    */
   async search(params) {
     const queryParams = typeof params === "string" ? { q: params } : params;
-    const { data } = await api.get("/medicines", { params: queryParams });
-    return data;
+    const response = await api.get("/medicines", { params: queryParams });
+    const data = response.data || {};
+    return {
+      medicines: data.medicines || [],
+      pagination: data.pagination || {
+        total: data.total || 0,
+        page: data.page || 1,
+        totalPages: data.totalPages || 1,
+        limit: data.limit || 12,
+      },
+      data: data.medicines || [],
+    };
   },
 
   /**
@@ -16,8 +26,12 @@ export const medicineService = {
    * @param {string} id
    */
   async getById(id) {
-    const { data } = await api.get(`/medicines/${id}`);
-    return data;
+    const response = await api.get(`/medicines/${id}`);
+    const data = response.data || {};
+    return {
+      medicine: data.medicine || data,
+      data: data.medicine || data,
+    };
   },
 
   /**
@@ -25,8 +39,12 @@ export const medicineService = {
    * @param {string} id
    */
   async getAlternatives(id) {
-    const { data } = await api.get(`/medicines/${id}/alternatives`);
-    return data;
+    const response = await api.get(`/medicines/${id}/alternatives`);
+    const data = response.data || {};
+    return {
+      alternatives: data.alternatives || [],
+      data: data.alternatives || [],
+    };
   },
 
   /**
@@ -34,16 +52,24 @@ export const medicineService = {
    * @param {number} limit
    */
   async getPopular(limit = 4) {
-    const { data } = await api.get("/medicines/popular", { params: { limit } });
-    return data;
+    const response = await api.get("/medicines/popular", { params: { limit } });
+    const data = response.data || {};
+    return {
+      medicines: data.medicines || [],
+      data: data.medicines || [],
+    };
   },
 
   /**
    * Get list of categories with active medicine counts
    */
   async getCategories() {
-    const { data } = await api.get("/medicines/categories");
-    return data;
+    const response = await api.get("/medicines/categories");
+    const data = response.data || {};
+    return {
+      categories: data.categories || [],
+      data: data.categories || [],
+    };
   },
 
   /**
@@ -52,8 +78,12 @@ export const medicineService = {
    * @param {string} idB
    */
   async compare(idA, idB) {
-    const { data } = await api.get("/medicines/compare", { params: { a: idA, b: idB } });
-    return data;
+    const response = await api.get("/medicines/compare", { params: { a: idA, b: idB } });
+    const data = response.data || {};
+    return {
+      medicines: data.medicines || [],
+      data: data.medicines || [],
+    };
   },
 };
 

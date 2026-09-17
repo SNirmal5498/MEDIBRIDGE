@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { User, Mail, Lock, Eye, EyeOff, UserPlus } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { useLanguage } from "../../context/LanguageContext";
 import Button from "../../components/common/Button";
 
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [form, setForm] = useState({
     name: "",
@@ -51,11 +53,11 @@ export default function Register() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="font-display font-extrabold text-2xl text-text">
-            Create your account
+            {t("auth.registerTitle")}
           </h1>
 
           <p className="mt-1.5 text-sm text-text-muted">
-            Compare medicines and order OTC essentials safely.
+            {t("auth.registerSubtitle")}
           </p>
         </div>
 
@@ -69,7 +71,7 @@ export default function Register() {
 
           <div>
             <label className="block text-sm font-medium text-text mb-1.5">
-              Full Name
+              {t("auth.nameLabel")}
             </label>
 
             <div className="flex items-center gap-2 rounded-xl border border-border px-3.5 py-2.5 focus-within:border-primary transition-colors">
@@ -89,7 +91,7 @@ export default function Register() {
 
           <div>
             <label className="block text-sm font-medium text-text mb-1.5">
-              Email
+              {t("auth.emailLabel")}
             </label>
 
             <div className="flex items-center gap-2 rounded-xl border border-border px-3.5 py-2.5 focus-within:border-primary transition-colors">
@@ -109,7 +111,7 @@ export default function Register() {
 
           <div>
             <label className="block text-sm font-medium text-text mb-1.5">
-              Password
+              {t("auth.passwordLabel")}
             </label>
 
             <div className="flex items-center gap-2 rounded-xl border border-border px-3.5 py-2.5 focus-within:border-primary transition-colors">
@@ -146,16 +148,16 @@ export default function Register() {
             className="w-full"
             disabled={loading}
           >
-            {loading ? "Creating account..." : "Create account"}
+            {loading ? t("common.loading") : t("auth.registerButton")}
           </Button>
 
           <p className="text-center text-sm text-text-muted">
-            Already have an account?{" "}
+            {t("auth.hasAccount")}{" "}
             <Link
               to="/login"
               className="text-primary-hover font-semibold hover:underline"
             >
-              Log in
+              {t("auth.loginLink")}
             </Link>
           </p>
 
@@ -163,4 +165,4 @@ export default function Register() {
       </div>
     </div>
   );
-}
+}

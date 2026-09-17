@@ -4,9 +4,11 @@ import { Pill } from "lucide-react";
 import { getFavoriteMedicines } from "../../utils/medicineData";
 import MedicineCard from "../../components/medicine/MedicineCard";
 import Button from "../../components/common/Button";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function Favorites() {
   const [medicines, setMedicines] = useState([]);
+  const { t } = useLanguage();
 
   useEffect(() => {
     setMedicines(getFavoriteMedicines());
@@ -15,8 +17,8 @@ export default function Favorites() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="mb-8">
-        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-text">My Medications</h1>
-        <p className="mt-1.5 text-text-muted">Medicines you've saved for quick access and reordering.</p>
+        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-text">{t("favorites.title")}</h1>
+        <p className="mt-1.5 text-text-muted">{t("favorites.subtitle")}</p>
       </div>
 
       {medicines.length === 0 ? (
@@ -24,9 +26,9 @@ export default function Favorites() {
           <div className="mx-auto grid place-items-center w-14 h-14 rounded-2xl bg-primary-50 text-primary-hover mb-4">
             <Pill className="w-6 h-6" />
           </div>
-          <p className="text-text-muted text-sm">You haven't saved any medicines yet.</p>
+          <p className="text-text-muted text-sm">{t("favorites.empty")}</p>
           <Button as={Link} to="/medicine" variant="primary" size="sm" className="mt-4 inline-flex">
-            Browse Medicines
+            {t("favorites.browse")}
           </Button>
         </div>
       ) : (
@@ -38,4 +40,4 @@ export default function Favorites() {
       )}
     </div>
   );
-}
+}

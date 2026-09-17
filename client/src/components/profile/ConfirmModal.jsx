@@ -1,18 +1,24 @@
 import { X } from "lucide-react";
 import Button from "../common/Button";
+import { useLanguage } from "../../hooks/useLanguage";
 
 export default function ConfirmModal({
   open,
   title,
   description,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
+  confirmLabel,
+  cancelLabel,
   confirmVariant = "danger",
   loading = false,
   onConfirm,
   onClose,
 }) {
+  const { t } = useLanguage();
+
   if (!open) return null;
+
+  const actualConfirmLabel = confirmLabel || t("profile.confirm");
+  const actualCancelLabel = cancelLabel || t("profile.cancel");
 
   return (
     <div
@@ -24,7 +30,7 @@ export default function ConfirmModal({
       <button
         type="button"
         className="absolute inset-0 bg-slate-900/40"
-        aria-label="Close dialog"
+        aria-label={t("profile.close")}
         onClick={onClose}
       />
       <div className="relative w-full max-w-md card p-6 sm:p-7">
@@ -32,7 +38,7 @@ export default function ConfirmModal({
           type="button"
           onClick={onClose}
           className="absolute top-4 right-4 p-1 rounded-lg text-text-muted hover:bg-slate-100"
-          aria-label="Close"
+          aria-label={t("profile.close")}
         >
           <X className="w-4 h-4" />
         </button>
@@ -42,7 +48,7 @@ export default function ConfirmModal({
         <p className="mt-2 text-sm text-text-muted leading-relaxed">{description}</p>
         <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
           <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={loading}>
-            {cancelLabel}
+            {actualCancelLabel}
           </Button>
           <Button
             type="button"
@@ -51,10 +57,11 @@ export default function ConfirmModal({
             onClick={onConfirm}
             disabled={loading}
           >
-            {loading ? "Please wait..." : confirmLabel}
+            {loading ? t("profile.pleaseWait") : actualConfirmLabel}
           </Button>
         </div>
       </div>
     </div>
   );
 }
+

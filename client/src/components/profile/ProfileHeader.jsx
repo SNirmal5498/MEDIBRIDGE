@@ -1,8 +1,10 @@
 import { Calendar, Pencil } from "lucide-react";
 import Button from "../common/Button";
 import { formatMemberSince } from "../../utils/helpers";
+import { useLanguage } from "../../hooks/useLanguage";
 
 export default function ProfileHeader({ user, onEdit }) {
+  const { t } = useLanguage();
   const initial = user?.name?.[0]?.toUpperCase() ?? "U";
   const role = (user?.role || "user").toUpperCase();
 
@@ -35,13 +37,14 @@ export default function ProfileHeader({ user, onEdit }) {
 
         <p className="mt-3 flex items-center gap-1.5 text-sm text-text-muted">
           <Calendar className="w-4 h-4 shrink-0" />
-          Member since {formatMemberSince(user?.createdAt)}
+          {t("profile.memberSince")} {formatMemberSince(user?.createdAt)}
         </p>
 
         <Button variant="primary" size="sm" icon={Pencil} className="mt-5 w-full sm:w-auto" onClick={onEdit}>
-          Edit Profile
+          {t("profile.editProfile")}
         </Button>
       </div>
     </section>
   );
 }
+

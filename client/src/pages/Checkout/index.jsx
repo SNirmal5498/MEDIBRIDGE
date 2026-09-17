@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
+import { useLanguage } from "../../context/LanguageContext";
 import { orderService } from "../../services/orderService";
 import { authService } from "../../services/authService";
 import OrderSummary from "../../components/checkout/OrderSummary";
@@ -13,9 +14,12 @@ import PrescriptionWarning from "../../components/checkout/PrescriptionWarning";
 import Button from "../../components/common/Button";
 import { getMedicineById } from "../../utils/medicineData";
 
+import { formatDate } from "../../utils/formatters";
+
 export default function Checkout() {
   const { user, isAuthenticated } = useAuth();
   const { cartItems, selectedPharmacy, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
 
   const [deliveryAddress, setDeliveryAddress] = useState({
@@ -58,31 +62,31 @@ export default function Checkout() {
 
   const validateForm = () => {
     if (!deliveryAddress.fullName?.trim()) {
-      setError("Please enter your full name");
+      setError(t("checkout.enterFullName"));
       return false;
     }
     if (!deliveryAddress.phone?.trim()) {
-      setError("Please enter your phone number");
+      setError(t("checkout.enterPhone"));
       return false;
     }
     if (!deliveryAddress.houseFlat?.trim()) {
-      setError("Please enter house/flat number");
+      setError(t("checkout.enterHouse"));
       return false;
     }
     if (!deliveryAddress.city?.trim()) {
-      setError("Please enter city");
+      setError(t("checkout.city"));
       return false;
     }
     if (!deliveryAddress.state?.trim()) {
-      setError("Please enter state");
+      setError(t("checkout.state"));
       return false;
     }
     if (!deliveryAddress.pincode?.trim() || deliveryAddress.pincode.length !== 6) {
-      setError("Please enter a valid 6-digit pincode");
+      setError(t("checkout.enterPincode"));
       return false;
     }
     if (!paymentMethod) {
-      setError("Please select a payment method");
+      setError(t("checkout.paymentMethod"));
       return false;
     }
     return true;
@@ -98,7 +102,7 @@ export default function Checkout() {
     });
 
     if (hasPrescriptionMedicine) {
-      setError("Prescription medicines cannot be ordered directly");
+      setError(t("checkout.prescriptionRequiredDesc"));
       return;
     }
 
@@ -143,7 +147,7 @@ export default function Checkout() {
       setOrderSuccess(true);
       clearCart();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to place order. Please try again.");
+      setError(err.response?.data?.message || t("common.error"));
     } finally {
       setLoading(false);
     }
@@ -156,12 +160,7 @@ export default function Checkout() {
   });
 
   if (orderSuccess && createdOrder) {
-    const estimatedDelivery = new Date(createdOrder.estimatedDelivery);
-    const deliveryDate = estimatedDelivery.toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
+    const deliveryDate = formatDate(createdOrder.estimatedDelivery, language.code);
 
     return (
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -171,20 +170,20 @@ export default function Checkout() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="font-display font-extrabold text-2xl text-text mb-2">Order Placed Successfully!</h1>
-          <p className="text-text-muted mb-6">Your order has been placed successfully.</p>
+          <h1 className="font-display font-extrabold text-2xl text-text mb-2">{t("checkout.orderSuccess")}</h1>
+          <p className="text-text-muted mb-6">{t("checkout.orderSuccessDesc")}</p>
           <div className="bg-slate-50 rounded-xl p-4 mb-6">
-            <p className="text-sm text-text-muted mb-1">Order ID</p>
+            <p className="text-sm text-text-muted mb-1">{t("checkout.orderId")}</p>
             <p className="font-display font-bold text-lg text-text">{createdOrder.id}</p>
-            <p className="text-sm text-text-muted mt-3 mb-1">Estimated Delivery</p>
+            <p className="text-sm text-text-muted mt-3 mb-1">{t("checkout.estimatedDelivery")}</p>
             <p className="font-semibold text-text">{deliveryDate}</p>
           </div>
           <div className="flex gap-3 justify-center">
             <Button onClick={() => navigate("/orders")} variant="primary">
-              Track Order
+              {t("checkout.trackOrder")}
             </Button>
             <Button onClick={() => navigate("/medicine")} variant="secondary">
-              Continue Shopping
+              {t("checkout.continueShopping")}
             </Button>
           </div>
         </div>
@@ -195,8 +194,8 @@ export default function Checkout() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="mb-8">
-        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-text">Checkout</h1>
-        <p className="mt-1.5 text-text-muted">Review your order and complete checkout.</p>
+        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-text">{t("checkout.title")}</h1>
+        <p className="mt-1.5 text-text-muted">{t("checkout.subtitle")}</p>
       </div>
 
       {error && (
@@ -236,10 +235,11 @@ export default function Checkout() {
             className="w-full"
             size="lg"
           >
-            {loading ? "Placing Order..." : "Place Order"}
+            {loading ? t("checkout.placingOrder") : t("checkout.placeOrder")}
           </Button>
         </div>
       </div>
     </div>
   );
 }
+

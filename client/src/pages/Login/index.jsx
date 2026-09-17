@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, LogIn } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { useLanguage } from "../../context/LanguageContext";
 import Button from "../../components/common/Button";
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [form, setForm] = useState({
     email: "",
@@ -47,11 +49,11 @@ export default function Login() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="font-display font-extrabold text-2xl text-text">
-            Welcome back
+            {t("auth.loginTitle")}
           </h1>
 
           <p className="mt-1.5 text-sm text-text-muted">
-            Log in to manage your orders and favorites.
+            {t("auth.loginSubtitle")}
           </p>
         </div>
 
@@ -65,7 +67,7 @@ export default function Login() {
 
           <div>
             <label className="block text-sm font-medium text-text mb-1.5">
-              Email
+              {t("auth.emailLabel")}
             </label>
 
             <div className="flex items-center gap-2 rounded-xl border border-border px-3.5 py-2.5 focus-within:border-primary transition-colors">
@@ -85,7 +87,7 @@ export default function Login() {
 
           <div>
             <label className="block text-sm font-medium text-text mb-1.5">
-              Password
+              {t("auth.passwordLabel")}
             </label>
 
             <div className="flex items-center gap-2 rounded-xl border border-border px-3.5 py-2.5 focus-within:border-primary transition-colors">
@@ -121,16 +123,16 @@ export default function Login() {
             className="w-full"
             disabled={loading}
           >
-            {loading ? "Logging in..." : "Log in"}
+            {loading ? t("common.loading") : t("auth.loginButton")}
           </Button>
 
           <p className="text-center text-sm text-text-muted">
-            Don't have an account?{" "}
+            {t("auth.noAccount")}{" "}
             <Link
               to="/register"
               className="text-primary-hover font-semibold hover:underline"
             >
-              Register
+              {t("auth.registerLink")}
             </Link>
           </p>
 
@@ -138,4 +140,4 @@ export default function Login() {
       </div>
     </div>
   );
-}
+}

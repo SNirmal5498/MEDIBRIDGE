@@ -1,17 +1,20 @@
 import { Link } from "react-router-dom";
 import { Building2, MapPin, Phone, Navigation, Star } from "lucide-react";
 import Button from "../common/Button";
+import { useLanguage } from "../../hooks/useLanguage";
 
 export default function SavedPharmacies({ pharmacies, onRemove }) {
+  const { t } = useLanguage();
+
   return (
     <section>
       <div className="flex items-end justify-between gap-3 mb-5">
         <div>
-          <h2 className="font-display font-bold text-xl text-text">Saved Pharmacies</h2>
-          <p className="mt-1 text-sm text-text-muted">Quick access to pharmacies you visit often.</p>
+          <h2 className="font-display font-bold text-xl text-text">{t("profile.savedPharmacies")}</h2>
+          <p className="mt-1 text-sm text-text-muted">{t("profile.savedPharmaciesSubtitle")}</p>
         </div>
         <Button as={Link} to="/pharmacy" variant="ghost" size="sm">
-          View all
+          {t("categories.viewAll")}
         </Button>
       </div>
 
@@ -20,9 +23,9 @@ export default function SavedPharmacies({ pharmacies, onRemove }) {
           <div className="mx-auto grid place-items-center w-12 h-12 rounded-2xl bg-primary-50 text-primary-hover mb-3">
             <Building2 className="w-5 h-5" />
           </div>
-          <p className="text-sm text-text-muted">No saved pharmacies yet.</p>
+          <p className="text-sm text-text-muted">{t("profile.noSavedPharmacies")}</p>
           <Button as={Link} to="/pharmacy" variant="primary" size="sm" className="mt-4 inline-flex">
-            Find Pharmacies
+            {t("pharmacy.findPharmacies")}
           </Button>
         </div>
       ) : (
@@ -47,7 +50,7 @@ export default function SavedPharmacies({ pharmacies, onRemove }) {
                       pharmacy.isOpen ? "bg-primary-50 text-primary-hover" : "bg-danger-50 text-danger"
                     }`}
                   >
-                    {pharmacy.isOpen ? "Open" : "Closed"}
+                    {pharmacy.isOpen ? t("pharmacy.open") : t("pharmacy.closed")}
                   </span>
                 </div>
 
@@ -65,7 +68,7 @@ export default function SavedPharmacies({ pharmacies, onRemove }) {
                 <div className="mt-4 pt-4 border-t border-border space-y-2">
                   <div className="flex gap-2">
                     <Button as={Link} to="/pharmacy" variant="primary" size="sm" className="flex-1">
-                      View Pharmacy
+                      {t("profile.viewPharmacy")}
                     </Button>
                     <Button
                       as="a"
@@ -77,7 +80,7 @@ export default function SavedPharmacies({ pharmacies, onRemove }) {
                       icon={Navigation}
                       className="flex-1"
                     >
-                      Get Directions
+                      {t("pharmacy.getDirections")}
                     </Button>
                   </div>
                   <button
@@ -85,7 +88,7 @@ export default function SavedPharmacies({ pharmacies, onRemove }) {
                     onClick={() => onRemove(pharmacy.id)}
                     className="w-full text-xs font-semibold text-text-muted hover:text-danger py-1 transition-colors"
                   >
-                    Remove
+                    {t("compare.remove")}
                   </button>
                 </div>
               </article>
@@ -96,3 +99,4 @@ export default function SavedPharmacies({ pharmacies, onRemove }) {
     </section>
   );
 }
+

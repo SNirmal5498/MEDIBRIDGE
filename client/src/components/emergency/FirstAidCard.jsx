@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { Cross, ChevronDown } from "lucide-react";
 import Button from "../common/Button";
+import { useLanguage } from "../../hooks/useLanguage";
 
 export default function FirstAidCard({ guide }) {
   const [open, setOpen] = useState(false);
+  const { t } = useLanguage();
+
+  const title = t(`firstaid.${guide.id}.title`) || guide.title;
+  const description = t(`firstaid.${guide.id}.desc`) || guide.description;
+  const steps = guide.steps.map((step, i) => t(`firstaid.${guide.id}.step${i + 1}`) || step);
 
   return (
     <div className="card card-hover p-5 flex flex-col">
@@ -12,14 +18,14 @@ export default function FirstAidCard({ guide }) {
           <Cross className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="font-display font-bold text-text">{guide.title}</h3>
-          <p className="mt-1 text-sm text-text-muted leading-snug">{guide.description}</p>
+          <h3 className="font-display font-bold text-text">{title}</h3>
+          <p className="mt-1 text-sm text-text-muted leading-snug">{description}</p>
         </div>
       </div>
 
       {open && (
         <ul className="mt-4 space-y-1.5 pl-1">
-          {guide.steps.map((step, i) => (
+          {steps.map((step, i) => (
             <li key={i} className="flex gap-2 text-sm text-text">
               <span className="text-primary-hover font-semibold shrink-0">{i + 1}.</span>
               {step}
@@ -35,8 +41,8 @@ export default function FirstAidCard({ guide }) {
         className={`w-full mt-4 !mt-auto pt-2 transition-transform ${open ? "[&_svg]:rotate-180" : ""}`}
         onClick={() => setOpen((v) => !v)}
       >
-        {open ? "Show Less" : "Read More"}
+        {open ? t("common.showLess") : t("common.readMore")}
       </Button>
     </div>
   );
-}
+}

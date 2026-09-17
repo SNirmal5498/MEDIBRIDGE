@@ -1,24 +1,10 @@
 import { useEffect, useState } from "react";
 import { Pencil } from "lucide-react";
 import Button from "../common/Button";
-
-const GENDER_OPTIONS = [
-  { value: "", label: "Prefer not to say" },
-  { value: "male", label: "Male" },
-  { value: "female", label: "Female" },
-  { value: "other", label: "Other" },
-  { value: "prefer_not_to_say", label: "Prefer not to say" },
-];
-
-function displayValue(value) {
-  return value ? value : "Not provided";
-}
-
-function genderLabel(value) {
-  return GENDER_OPTIONS.find((o) => o.value === value)?.label || (value ? value : "Not provided");
-}
+import { useLanguage } from "../../hooks/useLanguage";
 
 export default function PersonalInformation({ user, editing, onStartEdit, onCancelEdit, onSave }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -28,6 +14,22 @@ export default function PersonalInformation({ user, editing, onStartEdit, onCanc
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const GENDER_OPTIONS = [
+    { value: "", label: t("profile.preferNotToSay") },
+    { value: "male", label: t("profile.male") },
+    { value: "female", label: t("profile.female") },
+    { value: "other", label: t("profile.other") },
+    { value: "prefer_not_to_say", label: t("profile.preferNotToSay") },
+  ];
+
+  function displayValue(value) {
+    return value ? value : t("profile.notProvided");
+  }
+
+  function genderLabel(value) {
+    return GENDER_OPTIONS.find((o) => o.value === value)?.label || (value ? value : t("profile.notProvided"));
+  }
 
   useEffect(() => {
     setForm({
@@ -50,31 +52,31 @@ export default function PersonalInformation({ user, editing, onStartEdit, onCanc
     try {
       await onSave(form);
     } catch (err) {
-      setError(err.response?.data?.message || "Could not save profile. Try again.");
+      setError(err.response?.data?.message || t("common.error"));
     } finally {
       setSaving(false);
     }
   }
 
   const fields = [
-    { label: "Full Name", value: displayValue(user?.name) },
-    { label: "Email", value: displayValue(user?.email) },
-    { label: "Phone Number", value: displayValue(user?.phone) },
-    { label: "Date of Birth", value: displayValue(user?.dateOfBirth) },
-    { label: "Gender", value: genderLabel(user?.gender) },
-    { label: "Location", value: displayValue(user?.location) },
+    { label: t("profile.name"), value: displayValue(user?.name) },
+    { label: t("profile.email"), value: displayValue(user?.email) },
+    { label: t("profile.phone"), value: displayValue(user?.phone) },
+    { label: t("profile.dob"), value: displayValue(user?.dateOfBirth) },
+    { label: t("profile.gender"), value: genderLabel(user?.gender) },
+    { label: t("profile.location"), value: displayValue(user?.location) },
   ];
 
   return (
     <section className="card p-6 sm:p-8 h-full">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="font-display font-bold text-lg text-text">Personal Information</h2>
-          <p className="mt-1 text-sm text-text-muted">Your contact and demographic details.</p>
+          <h2 className="font-display font-bold text-lg text-text">{t("profile.personalInfo")}</h2>
+          <p className="mt-1 text-sm text-text-muted">{t("profile.contactDemoDetails")}</p>
         </div>
         {!editing && (
           <Button variant="secondary" size="sm" icon={Pencil} onClick={onStartEdit}>
-            Edit Profile
+            {t("profile.editProfile")}
           </Button>
         )}
       </div>
@@ -86,7 +88,7 @@ export default function PersonalInformation({ user, editing, onStartEdit, onCanc
           )}
 
           <div>
-            <label className="block text-sm font-medium text-text mb-1.5">Full Name</label>
+            <label className="block text-sm font-medium text-text mb-1.5">{t("profile.name")}</label>
             <input
               name="name"
               required
@@ -97,7 +99,7 @@ export default function PersonalInformation({ user, editing, onStartEdit, onCanc
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text mb-1.5">Email</label>
+            <label className="block text-sm font-medium text-text mb-1.5">{t("profile.email")}</label>
             <input
               value={user?.email || ""}
               disabled
@@ -107,7 +109,7 @@ export default function PersonalInformation({ user, editing, onStartEdit, onCanc
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-text mb-1.5">Phone Number</label>
+              <label className="block text-sm font-medium text-text mb-1.5">{t("profile.phone")}</label>
               <input
                 name="phone"
                 type="tel"
@@ -118,7 +120,7 @@ export default function PersonalInformation({ user, editing, onStartEdit, onCanc
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-text mb-1.5">Date of Birth</label>
+              <label className="block text-sm font-medium text-text mb-1.5">{t("profile.dob")}</label>
               <input
                 name="dateOfBirth"
                 type="date"
@@ -131,7 +133,7 @@ export default function PersonalInformation({ user, editing, onStartEdit, onCanc
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-text mb-1.5">Gender</label>
+              <label className="block text-sm font-medium text-text mb-1.5">{t("profile.gender")}</label>
               <select
                 name="gender"
                 value={form.gender}
@@ -146,7 +148,7 @@ export default function PersonalInformation({ user, editing, onStartEdit, onCanc
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-text mb-1.5">Location</label>
+              <label className="block text-sm font-medium text-text mb-1.5">{t("profile.location")}</label>
               <input
                 name="location"
                 value={form.location}
@@ -159,10 +161,10 @@ export default function PersonalInformation({ user, editing, onStartEdit, onCanc
 
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
             <Button type="button" variant="secondary" size="sm" onClick={onCancelEdit} disabled={saving}>
-              Cancel
+              {t("profile.cancel")}
             </Button>
             <Button type="submit" variant="primary" size="sm" disabled={saving}>
-              {saving ? "Saving..." : "Save Changes"}
+              {saving ? t("profile.saving") : t("profile.saveChanges")}
             </Button>
           </div>
         </form>
@@ -179,3 +181,4 @@ export default function PersonalInformation({ user, editing, onStartEdit, onCanc
     </section>
   );
 }
+

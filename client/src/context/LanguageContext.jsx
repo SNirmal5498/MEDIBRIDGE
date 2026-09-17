@@ -1,7 +1,13 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useContext } from "react";
 import { LANGUAGES } from "../utils/constants";
 import { translate } from "../i18n/translations";
 import { LanguageContext } from "./LanguageContextObject";
+
+export function useLanguage() {
+  const ctx = useContext(LanguageContext);
+  if (!ctx) throw new Error("useLanguage must be used within a LanguageProvider");
+  return ctx;
+}
 
 export function LanguageProvider({ children }) {
   const [language, setLanguageState] = useState(() => {
@@ -14,9 +20,9 @@ export function LanguageProvider({ children }) {
     localStorage.setItem("medibridge_language", lang.code);
   }, []);
 
-  const t = useCallback((key) => translate(language.code, key), [language]);
+  const t = useCallback((key, params) => translate(language.code, key, params), [language]);
 
   const value = useMemo(() => ({ language, setLanguage, t }), [language, setLanguage, t]);
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
-}
+}

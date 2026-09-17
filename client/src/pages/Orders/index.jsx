@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { orderService } from "../../services/orderService";
 import OrderSummaryCard from "../../components/orders/OrderSummaryCard";
+import { useLanguage } from "../../hooks/useLanguage";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     loadOrders();
@@ -38,7 +40,7 @@ export default function Orders() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="text-center text-text-muted">Loading orders...</div>
+        <div className="text-center text-text-muted">{t("medicine.loading")}</div>
       </div>
     );
   }
@@ -46,8 +48,8 @@ export default function Orders() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="mb-8">
-        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-text">Your Orders</h1>
-        <p className="mt-1.5 text-text-muted">Track your order from placement to delivery.</p>
+        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-text">{t("orders.title")}</h1>
+        <p className="mt-1.5 text-text-muted">{t("orders.subtitle")}</p>
       </div>
 
       <form onSubmit={handleSearch} className="flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 shadow-card">
@@ -56,15 +58,15 @@ export default function Orders() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           type="text"
-          placeholder="Enter Order ID (e.g., MB-20260714-001)"
+          placeholder={t("orders.enterOrderId")}
           className="w-full text-sm focus:outline-none bg-transparent"
         />
       </form>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <span className="text-xs font-semibold text-text-muted uppercase self-center mr-1">Your orders:</span>
+        <span className="text-xs font-semibold text-text-muted uppercase self-center mr-1">{t("orders.title")}:</span>
         {orders.length === 0 ? (
-          <span className="text-sm text-text-muted">No orders yet</span>
+          <span className="text-sm text-text-muted">{t("orders.noOrders")}</span>
         ) : (
           orders.map((o) => (
             <button
@@ -85,7 +87,7 @@ export default function Orders() {
           <OrderSummaryCard order={order} />
         ) : (
           <p className="text-center text-text-muted text-sm py-16">
-            {orders.length === 0 ? "You haven't placed any orders yet." : "No order found with that ID."}
+            {orders.length === 0 ? t("orders.noOrdersDesc") : t("orders.noOrders")}
           </p>
         )}
       </div>

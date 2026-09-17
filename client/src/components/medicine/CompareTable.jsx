@@ -1,19 +1,22 @@
 import { formatINR } from "../../utils/helpers";
-
-const ROWS = [
-  { key: "strength", label: "Strength" },
-  { key: "manufacturer", label: "Manufacturer" },
-  { key: "price", label: "Price", format: formatINR },
-  { key: "otc", label: "OTC", format: (v) => (v ? "Yes" : "No — Rx only") },
-];
+import { useLanguage } from "../../hooks/useLanguage";
 
 export default function CompareTable({ medicines, highlightId }) {
+  const { t } = useLanguage();
+
+  const ROWS = [
+    { key: "strength", label: t("common.strength") },
+    { key: "manufacturer", label: t("common.manufacturer") },
+    { key: "price", label: t("details.price"), format: formatINR },
+    { key: "otc", label: t("medicine.otc"), format: (v) => (v ? t("common.yes") : t("common.noRxOnly")) },
+  ];
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr className="border-b border-border">
-            <th className="text-left py-3 pr-4 font-semibold text-text-muted w-32">Brand</th>
+            <th className="text-left py-3 pr-4 font-semibold text-text-muted w-32">{t("common.brand")}</th>
             {medicines.map((med) => (
               <th
                 key={med.id}
@@ -46,4 +49,4 @@ export default function CompareTable({ medicines, highlightId }) {
       </table>
     </div>
   );
-}
+}

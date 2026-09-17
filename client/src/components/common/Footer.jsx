@@ -10,8 +10,12 @@ import {
   FaEnvelope,
   FaMapMarkerAlt,
 } from "react-icons/fa";
+import { useLanguage } from "../../hooks/useLanguage";
+import { formatAddress } from "../../utils/formatters";
 
 export default function Footer() {
+  const { t, language } = useLanguage();
+
   return (
     <footer className="bg-teal-950 text-white mt-20">
       <div className="max-w-7xl mx-auto px-6 py-14">
@@ -31,36 +35,34 @@ export default function Footer() {
                 </h2>
 
                 <p className="text-sm text-gray-300">
-                  Compare • Locate • Order Safely
+                  {t("hero.subtitle").slice(0, 45)}...
                 </p>
               </div>
             </div>
 
             <p className="mt-5 text-gray-300 leading-7">
-              MediBridge helps users compare medicines, locate nearby
-              pharmacies and safely order eligible OTC medicines.
+              {t("footer.description")}
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
             <h3 className="font-semibold text-lg mb-5">
-              Quick Links
+              {t("footer.quickLinks")}
             </h3>
 
             <div className="flex flex-col gap-3 text-gray-300">
-              <Link to="/">Home</Link>
-              <Link to="/medicine">Compare Medicines</Link>
-              <Link to="/pharmacy">Nearby Pharmacy</Link>
-              <Link to="/emergency">Emergency</Link>
-              <Link to="/about">About</Link>
+              <Link to="/">{t("nav.home")}</Link>
+              <Link to="/medicine">{t("nav.compareMedicines")}</Link>
+              <Link to="/pharmacy">{t("nav.nearbyPharmacy")}</Link>
+              <Link to="/emergency">{t("nav.emergency")}</Link>
             </div>
           </div>
 
           {/* Contact */}
           <div>
             <h3 className="font-semibold text-lg mb-5">
-              Contact
+              {t("footer.contactUs")}
             </h3>
 
             <div className="space-y-4 text-gray-300">
@@ -77,7 +79,7 @@ export default function Footer() {
 
               <div className="flex items-start gap-3">
                 <FaMapMarkerAlt className="mt-1" />
-                Coimbatore, Tamil Nadu, India
+                {formatAddress("Coimbatore, Tamil Nadu, India", language.code)}
               </div>
 
             </div>
@@ -86,7 +88,7 @@ export default function Footer() {
           {/* Social */}
           <div>
             <h3 className="font-semibold text-lg mb-5">
-              Follow Us
+              {t("footer.followUs")}
             </h3>
 
             <div className="flex gap-4 text-2xl">
@@ -111,31 +113,30 @@ export default function Footer() {
           </div>
 
         </div>
-         {/* Medical Disclaimer */}
-<div className="mt-10 rounded-2xl border border-teal-800 bg-teal-900/50 p-5 flex items-start gap-3">
-  <ShieldAlert className="w-5 h-5 text-yellow-400 shrink-0 mt-0.5" />
 
-  <p className="text-sm text-teal-100/70 leading-relaxed">
-    <span className="font-semibold text-white">
-      Medical Disclaimer:
-    </span>{" "}
-    The information provided on MediBridge is generated dynamically for
-    informational purposes only. It is not a substitute for professional
-    medical advice, diagnosis, or treatment. Always consult a qualified
-    physician or pharmacist before starting any new medication or treatment.
-  </p>
-</div>
+        {/* Medical Disclaimer */}
+        <div className="mt-10 rounded-2xl border border-teal-800 bg-teal-900/50 p-5 flex items-start gap-3">
+          <ShieldAlert className="w-5 h-5 text-yellow-400 shrink-0 mt-0.5" />
+
+          <p className="text-sm text-teal-100/70 leading-relaxed">
+            <span className="font-semibold text-white">
+              {t("footer.medicalDisclaimer")}:
+            </span>{" "}
+            {t("footer.disclaimerNotice")} {t("details.disclaimerText")}
+          </p>
+        </div>
+
         <hr className="my-10 border-teal-800" />
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-gray-400 text-sm">
 
           <p>
-            © 2026 MediBridge. All Rights Reserved.
+            © 2026 MediBridge. {t("footer.allRightsReserved")}
           </p>
 
           <div className="flex gap-6">
-            <Link to="#">Privacy Policy</Link>
-            <Link to="#">Terms & Conditions</Link>
+            <Link to="#">{t("footer.privacyPolicy")}</Link>
+            <Link to="#">{t("footer.terms")}</Link>
           </div>
 
         </div>

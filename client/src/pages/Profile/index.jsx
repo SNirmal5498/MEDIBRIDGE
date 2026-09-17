@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { User } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { useLanguage } from "../../hooks/useLanguage";
 import Button from "../../components/common/Button";
 import ProfileHeader from "../../components/profile/ProfileHeader";
 import PersonalInformation from "../../components/profile/PersonalInformation";
@@ -24,6 +25,7 @@ export default function Profile() {
   const { user, loading, isAuthenticated, logout, updateProfile, changePassword, deleteAccount } =
     useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const personalRef = useRef(null);
 
   const [editing, setEditing] = useState(false);
@@ -74,7 +76,7 @@ export default function Profile() {
       setDeleteOpen(false);
       navigate("/");
     } catch (err) {
-      setDeleteError(err.response?.data?.message || "Could not delete account.");
+      setDeleteError(err.response?.data?.message || t("common.error"));
     } finally {
       setDeleting(false);
     }
@@ -98,16 +100,16 @@ export default function Profile() {
           <div className="mx-auto grid place-items-center w-14 h-14 rounded-2xl bg-primary-50 text-primary-hover mb-4">
             <User className="w-6 h-6" />
           </div>
-          <h1 className="font-display font-extrabold text-2xl text-text">Your profile</h1>
+          <h1 className="font-display font-extrabold text-2xl text-text">{t("profile.title")}</h1>
           <p className="mt-2 text-sm text-text-muted">
-            Log in to view your details, orders, saved medicines, and account settings.
+            {t("auth.loginSubtitle")}
           </p>
           <div className="mt-6 flex flex-col sm:flex-row gap-2 justify-center">
             <Button as={Link} to="/login" variant="primary" size="sm">
-              Log in
+              {t("nav.login")}
             </Button>
             <Button as={Link} to="/register" variant="secondary" size="sm">
-              Create account
+              {t("nav.register")}
             </Button>
           </div>
         </div>
@@ -118,8 +120,8 @@ export default function Profile() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="mb-8">
-        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-text">Profile</h1>
-        <p className="mt-1.5 text-text-muted">Manage your MediBridge account, orders, and saved items.</p>
+        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-text">{t("profile.title")}</h1>
+        <p className="mt-1.5 text-text-muted">{t("profile.personalInfo")}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
@@ -169,13 +171,13 @@ export default function Profile() {
 
       <ConfirmModal
         open={deleteOpen}
-        title="Delete your account?"
+        title={t("profile.deleteAccount")}
         description={
           deleteError
             ? deleteError
-            : "This will permanently remove your MediBridge account. This action cannot be undone."
+            : t("profile.deleteAccount")
         }
-        confirmLabel="Delete Account"
+        confirmLabel={t("profile.deleteAccount")}
         loading={deleting}
         onConfirm={handleDeleteAccount}
         onClose={() => {

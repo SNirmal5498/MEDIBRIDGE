@@ -14,10 +14,14 @@ import {
 import Button from "../common/Button";
 import CompareTable from "./CompareTable";
 import { formatINR, getAlternatives } from "../../utils/helpers";
+import { useLanguage } from "../../hooks/useLanguage";
+
+import { formatBrandName, formatGenericName, formatStrength, formatManufacturer } from "../../utils/formatters";
 
 export default function MedicineDetailPanel({ medicine, allMedicines, onClose }) {
   const navigate = useNavigate();
   const [added, setAdded] = useState(false);
+  const { t, language } = useLanguage();
 
   // Reset the "added to cart" feedback whenever a different medicine opens.
   useEffect(() => setAdded(false), [medicine?.id]);
@@ -25,6 +29,11 @@ export default function MedicineDetailPanel({ medicine, allMedicines, onClose })
   const isOpen = !!medicine;
   const alternatives = medicine ? getAlternatives(medicine, allMedicines) : [];
   const compareSet = medicine ? [medicine, ...alternatives] : [];
+
+  const brand = formatBrandName(medicine?.brand || medicine?.name, language.code);
+  const generic = formatGenericName(medicine?.genericName || medicine?.name, language.code);
+  const strength = formatStrength(medicine?.strength, language.code);
+  const mfg = formatManufacturer(medicine?.manufacturer, language.code);
 
   return (
     <AnimatePresence>
@@ -48,10 +57,10 @@ export default function MedicineDetailPanel({ medicine, allMedicines, onClose })
               overflow-y-auto"
           >
             <div className="sticky top-0 bg-card/95 backdrop-blur border-b border-border px-6 py-4 flex items-center justify-between">
-              <p className="font-display font-bold text-text">Medicine Details</p>
+              <p className="font-display font-bold text-text">{t("details.title")}</p>
               <button
                 onClick={onClose}
-                aria-label="Close"
+                aria-label={t("common.close")}
                 className="grid place-items-center w-9 h-9 rounded-lg text-text-muted hover:text-text hover:bg-slate-100 transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -63,15 +72,15 @@ export default function MedicineDetailPanel({ medicine, allMedicines, onClose })
               <div>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">{medicine?.name}</p>
-                    <h2 className="mt-0.5 font-display font-extrabold text-text text-2xl">{medicine?.brand}</h2>
+                    <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">{generic}</p>
+                    <h2 className="mt-0.5 font-display font-extrabold text-text text-2xl">{brand}</h2>
                   </div>
                   <span
                     className={`shrink-0 flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full
                       ${medicine?.otc ? "bg-primary-50 text-primary-hover" : "bg-warning-50 text-warning"}`}
                   >
                     {medicine?.otc ? <ShieldCheck className="w-3.5 h-3.5" /> : <ShieldAlert className="w-3.5 h-3.5" />}
-                    {medicine?.otc ? "OTC" : "Prescription"}
+                    {medicine?.otc ? t("medicine.otc") : t("medicine.prescription")}
                   </span>
                 </div>
                 <p className="mt-3 font-display font-bold text-3xl text-text">
@@ -82,14 +91,14 @@ export default function MedicineDetailPanel({ medicine, allMedicines, onClose })
               {/* Info grid */}
               <div className="card p-4 grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-text-muted text-xs mb-0.5">Strength</p>
-                  <p className="font-semibold text-text">{medicine?.strength}</p>
+                  <p className="text-text-muted text-xs mb-0.5">{t("common.strength")}</p>
+                  <p className="font-semibold text-text">{strength}</p>
                 </div>
                 <div>
                   <p className="text-text-muted text-xs mb-0.5 flex items-center gap-1">
-                    <Building2 className="w-3 h-3" /> Manufacturer
+                    <Building2 className="w-3 h-3" /> {t("common.manufacturer")}
                   </p>
-                  <p className="font-semibold text-text">{medicine?.manufacturer}</p>
+                  <p className="font-semibold text-text">{mfg}</p>
                 </div>
               </div>
 
@@ -98,8 +107,7 @@ export default function MedicineDetailPanel({ medicine, allMedicines, onClose })
                 <div className="rounded-xl bg-warning-50 border border-warning/20 px-4 py-3 flex gap-2.5">
                   <ShieldAlert className="w-4 h-4 text-warning shrink-0 mt-0.5" />
                   <p className="text-xs text-text leading-relaxed">
-                    This medicine requires a valid prescription. It can't be ordered through MediBridge —
-                    please consult a doctor or pharmacist.
+                    {t("checkout.prescriptionRequiredDesc")}
                   </p>
                 </div>
               )}
@@ -108,13 +116,13 @@ export default function MedicineDetailPanel({ medicine, allMedicines, onClose })
               <div>
                 <p className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-primary-hover uppercase mb-3">
                   <Scale className="w-3.5 h-3.5" />
-                  {alternatives.length > 0 ? "Compare brand alternatives" : "Brand alternatives"}
+                  {t("common.compareBrandAlternatives")}
                 </p>
                 {alternatives.length > 0 ? (
                   <CompareTable medicines={compareSet} highlightId={medicine?.id} />
                 ) : (
                   <p className="text-sm text-text-muted card p-4">
-                    No other brand alternatives listed for {medicine?.name} yet.
+                    {t("common.noAlternatives")}
                   </p>
                 )}
               </div>
@@ -127,7 +135,7 @@ export default function MedicineDetailPanel({ medicine, allMedicines, onClose })
                   className="w-full"
                   onClick={() => navigate("/pharmacy")}
                 >
-                  Find Nearby Pharmacy
+                  {t("hero.findPharmacy")}
                 </Button>
                 <Button
                   variant="primary"
@@ -136,7 +144,7 @@ export default function MedicineDetailPanel({ medicine, allMedicines, onClose })
                   disabled={!medicine?.otc}
                   onClick={() => setAdded(true)}
                 >
-                  {!medicine?.otc ? "Not available for order" : added ? "Added to Cart" : "Add to Cart"}
+                  {!medicine?.otc ? t("common.notAvailableForOrder") : added ? t("common.addedToCart") : t("common.addToCart")}
                 </Button>
               </div>
             </div>
@@ -145,4 +153,4 @@ export default function MedicineDetailPanel({ medicine, allMedicines, onClose })
       )}
     </AnimatePresence>
   );
-}
+}

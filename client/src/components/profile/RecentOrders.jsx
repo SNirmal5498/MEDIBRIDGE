@@ -3,6 +3,8 @@ import { Package } from "lucide-react";
 import Button from "../common/Button";
 import { getAllOrders } from "../../utils/orderData";
 import { formatINR } from "../../utils/helpers";
+import { useLanguage } from "../../hooks/useLanguage";
+import { formatDateTime, formatPharmacyName } from "../../utils/formatters";
 
 const STATUS_MAP = {
   placed: "Pending",
@@ -48,19 +50,20 @@ function toProfileOrder(order, index) {
 }
 
 export default function RecentOrders() {
+  const { t, language } = useLanguage();
   const orders = [...getAllOrders().map(toProfileOrder), SAMPLE_CANCELLED].slice(0, 4);
 
   return (
     <section>
       <div className="flex items-end justify-between gap-3 mb-5">
         <div>
-          <h2 className="font-display font-bold text-xl text-text">Recent Orders</h2>
+          <h2 className="font-display font-bold text-xl text-text">{t("profile.recentOrders")}</h2>
           <p className="mt-1 text-sm text-text-muted">
-            Sample order history until a user orders API is available.
+            {t("profile.sampleHistory")}
           </p>
         </div>
         <Button as={Link} to="/orders" variant="ghost" size="sm">
-          View all
+          {t("categories.viewAll")}
         </Button>
       </div>
 
@@ -69,7 +72,7 @@ export default function RecentOrders() {
           <div className="mx-auto grid place-items-center w-12 h-12 rounded-2xl bg-primary-50 text-primary-hover mb-3">
             <Package className="w-5 h-5" />
           </div>
-          <p className="text-sm text-text-muted">You have no recent orders.</p>
+          <p className="text-sm text-text-muted">{t("profile.noRecentOrders")}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -77,12 +80,12 @@ export default function RecentOrders() {
             <article key={order.id} className="card p-4 sm:p-5">
               <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                 <div className="flex-1 min-w-0 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                  <Field label="Order ID" value={order.id} />
-                  <Field label="Medicine" value={order.medicineName} />
-                  <Field label="Qty" value={String(order.quantity)} />
-                  <Field label="Pharmacy" value={order.pharmacy} />
-                  <Field label="Date" value={order.date} />
-                  <Field label="Total" value={formatINR(order.total)} accent />
+                  <Field label={t("checkout.orderId")} value={order.id} />
+                  <Field label={t("orders.items")} value={order.medicineName} />
+                  <Field label={t("profile.qty")} value={String(order.quantity)} />
+                  <Field label={t("hero.findPharmacy")} value={formatPharmacyName(order.pharmacy, t)} />
+                  <Field label={t("profile.date")} value={formatDateTime(order.date, language.code)} />
+                  <Field label={t("orders.total")} value={formatINR(order.total)} accent />
                 </div>
                 <div className="flex items-center justify-between lg:flex-col lg:items-end gap-3 shrink-0">
                   <span
@@ -90,10 +93,14 @@ export default function RecentOrders() {
                       STATUS_STYLES[order.status] || STATUS_STYLES.Pending
                     }`}
                   >
-                    {order.status}
+                    {order.status === "Delivered"
+                      ? t("orders.delivered")
+                      : order.status === "Cancelled"
+                      ? t("orders.pending")
+                      : t("orders.pending")}
                   </span>
                   <Button as={Link} to="/orders" variant="secondary" size="sm">
-                    View Order
+                    {t("profile.viewOrder")}
                   </Button>
                 </div>
               </div>
@@ -115,3 +122,4 @@ function Field({ label, value, accent }) {
     </div>
   );
 }
+

@@ -1,10 +1,14 @@
-const FILTERS = [
-  { key: "all", label: "All Medicines" },
-  { key: "otc", label: "OTC Only" },
-  { key: "prescription", label: "Prescription" },
-];
+import { useLanguage } from "../../hooks/useLanguage";
 
 export default function MedicineFilterChips({ active, onChange }) {
+  const { t } = useLanguage();
+
+  const FILTERS = [
+    { key: "all", label: t("filter.all") },
+    { key: "otc", label: t("filter.otc") },
+    { key: "prescription", label: t("filter.prescription") },
+  ];
+
   return (
     <div className="flex flex-wrap gap-2">
       {FILTERS.map((f) => (
@@ -23,4 +27,4 @@ export default function MedicineFilterChips({ active, onChange }) {
       ))}
     </div>
   );
-}
+}

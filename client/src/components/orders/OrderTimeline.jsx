@@ -1,11 +1,27 @@
 import { PackageCheck, PackageOpen, Truck, CheckCircle2 } from "lucide-react";
 import { ORDER_STATUSES } from "../../utils/orderData";
+import { useLanguage } from "../../hooks/useLanguage";
+import { formatDateTime } from "../../utils/formatters";
 
 const ICONS = { PackageCheck, PackageOpen, Truck, CheckCircle2 };
 
 export default function OrderTimeline({ order }) {
+  const { t, language } = useLanguage();
+
+  const statusLabelMap = {
+    placed: t("orders.orderPlaced"),
+    packed: t("orders.packed"),
+    "out-for-delivery": t("orders.outForDelivery"),
+    delivered: t("orders.delivered"),
+    "at-warehouse": t("orders.atWarehouse"),
+    "in-transit": t("orders.inTransit"),
+    processing: t("orders.pending"),
+    pending: t("orders.pending"),
+  };
+
   const steps = ORDER_STATUSES.map((status) => ({
     ...status,
+    translatedLabel: statusLabelMap[status.key] || status.label,
     step: order.timeline.find((t) => t.status === status.key),
   }));
 
@@ -14,12 +30,10 @@ export default function OrderTimeline({ order }) {
 
   return (
     <div>
-      {/* Desktop/tablet: circles + line, narrower centered container = tighter spacing */}
+      {/* Desktop/tablet */}
       <div className="hidden sm:block max-w-xl mx-auto">
         <div className="relative">
-          {/* Background track — pinned exactly between first and last circle centers (circles are w-9 = 2.25rem, half = 1.125rem = left-4.5/right-4.5) */}
           <div className="absolute top-[18px] left-[18px] right-[18px] h-0.5 bg-slate-200" />
-          {/* Progress track */}
           <div
             className="absolute top-[18px] left-[18px] h-0.5 bg-primary transition-all duration-500"
             style={{ width: `calc(${progress} * (100% - 36px))` }}
@@ -44,20 +58,22 @@ export default function OrderTimeline({ order }) {
 
         {/* Labels */}
         <div className="grid grid-cols-4 mt-3">
-          {steps.map(({ key, label, step }) => (
+          {steps.map(({ key, translatedLabel, step }) => (
             <div key={key} className="text-center px-1">
               <p className={`text-sm font-semibold ${step?.done ? "text-text" : "text-text-muted"}`}>
-                {label}
+                {translatedLabel}
               </p>
-              <p className="text-xs text-text-muted mt-0.5">{step?.timestamp || "Pending"}</p>
+              <p className="text-xs text-text-muted mt-0.5">
+                {step?.timestamp ? formatDateTime(step.timestamp, language.code) : t("orders.pending")}
+              </p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Mobile: stacked vertical timeline */}
+      {/* Mobile */}
       <div className="sm:hidden">
-        {steps.map(({ key, label, icon, step }, i) => {
+        {steps.map(({ key, translatedLabel, icon, step }, i) => {
           const Icon = ICONS[icon];
           const isLast = i === steps.length - 1;
 
@@ -77,9 +93,11 @@ export default function OrderTimeline({ order }) {
               </div>
               <div className="pb-5">
                 <p className={`text-sm font-semibold ${step?.done ? "text-text" : "text-text-muted"}`}>
-                  {label}
+                  {translatedLabel}
                 </p>
-                <p className="text-xs text-text-muted mt-0.5">{step?.timestamp || "Pending"}</p>
+                <p className="text-xs text-text-muted mt-0.5">
+                  {step?.timestamp ? formatDateTime(step.timestamp, language.code) : t("orders.pending")}
+                </p>
               </div>
             </div>
           );

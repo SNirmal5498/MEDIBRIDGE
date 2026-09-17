@@ -1,19 +1,5 @@
 import { Search, ArrowUpDown } from "lucide-react";
-
-const FILTERS = [
-  { value: "all", label: "All" },
-  { value: "open", label: "Open Now" },
-  { value: "in-stock", label: "In Stock" },
-  { value: "otc", label: "OTC" },
-  { value: "prescription", label: "Prescription" },
-];
-
-const SORTS = [
-  { value: "distance", label: "Distance" },
-  { value: "rating", label: "Rating" },
-  { value: "price", label: "Price" },
-  { value: "availability", label: "Availability" },
-];
+import { useLanguage } from "../../hooks/useLanguage";
 
 export default function PharmacySearchFilterBar({
   query,
@@ -23,6 +9,23 @@ export default function PharmacySearchFilterBar({
   sort,
   onSortChange,
 }) {
+  const { t } = useLanguage();
+
+  const FILTERS = [
+    { value: "all", label: t("filter.all") },
+    { value: "open", label: t("pharmacy.open") },
+    { value: "in-stock", label: t("pharmacy.inStock") },
+    { value: "otc", label: t("medicine.otc") },
+    { value: "prescription", label: t("medicine.prescription") },
+  ];
+
+  const SORTS = [
+    { value: "distance", label: t("pharmacy.distance") },
+    { value: "rating", label: t("pharmacy.rating") },
+    { value: "price", label: t("details.price") },
+    { value: "availability", label: t("pharmacy.inStock") },
+  ];
+
   return (
     <div className="space-y-4">
       {/* Search */}
@@ -32,7 +35,7 @@ export default function PharmacySearchFilterBar({
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           type="text"
-          placeholder="Search by pharmacy, area, or medicine name..."
+          placeholder={t("pharmacy.searchLocation")}
           className="w-full text-sm focus:outline-none bg-transparent"
         />
       </div>
@@ -63,7 +66,7 @@ export default function PharmacySearchFilterBar({
           >
             {SORTS.map((s) => (
               <option key={s.value} value={s.value}>
-                Sort: {s.label}
+                {t("pharmacy.sort")}: {s.label}
               </option>
             ))}
           </select>
@@ -71,4 +74,4 @@ export default function PharmacySearchFilterBar({
       </div>
     </div>
   );
-}
+}

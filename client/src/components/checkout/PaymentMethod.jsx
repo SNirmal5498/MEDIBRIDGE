@@ -1,16 +1,19 @@
 import { CreditCard, Smartphone, Landmark, DollarSign } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 
 const PAYMENT_METHODS = [
-  { id: "cod", label: "Cash on Delivery", icon: DollarSign, available: true },
-  { id: "upi", label: "UPI", icon: Smartphone, available: false },
-  { id: "card", label: "Credit / Debit Card", icon: CreditCard, available: false },
-  { id: "netbanking", label: "Net Banking", icon: Landmark, available: false },
+  { id: "cod", key: "checkout.cod", icon: DollarSign, available: true },
+  { id: "upi", key: "checkout.upi", icon: Smartphone, available: false },
+  { id: "card", key: "checkout.card", icon: CreditCard, available: false },
+  { id: "netbanking", key: "checkout.netbanking", icon: Landmark, available: false },
 ];
 
 export default function PaymentMethod({ selectedMethod, onChange }) {
+  const { t } = useLanguage();
+
   return (
     <div className="card p-6">
-      <h3 className="font-display font-bold text-lg text-text mb-4">Payment Method</h3>
+      <h3 className="font-display font-bold text-lg text-text mb-4">{t("checkout.paymentMethod")}</h3>
       <div className="space-y-3">
         {PAYMENT_METHODS.map((method) => {
           const Icon = method.icon;
@@ -33,10 +36,10 @@ export default function PaymentMethod({ selectedMethod, onChange }) {
                 className="w-4 h-4 text-primary focus:ring-primary"
               />
               <Icon className="w-5 h-5 text-text-muted" />
-              <span className="flex-1 font-medium text-text">{method.label}</span>
+              <span className="flex-1 font-medium text-text">{t(method.key)}</span>
               {!method.available && (
                 <span className="text-xs font-semibold text-text-muted bg-slate-100 px-2 py-1 rounded-full">
-                  Coming Soon
+                  {t("checkout.comingSoon")}
                 </span>
               )}
             </label>
@@ -46,3 +49,4 @@ export default function PaymentMethod({ selectedMethod, onChange }) {
     </div>
   );
 }
+

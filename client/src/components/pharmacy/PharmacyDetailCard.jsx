@@ -16,34 +16,42 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
+import { useLanguage } from "../../hooks/useLanguage";
 import { getMedicineById } from "../../utils/medicineData";
+import { formatAddress, formatPharmacyName, formatTravelTime } from "../../utils/formatters";
 import Button from "../common/Button";
 
-const AVAILABILITY = {
-  "in-stock": {
-    label: "In Stock",
-    icon: CheckCircle2,
-    className: "bg-primary-50 text-primary-hover",
-  },
-  limited: {
-    label: "Limited Stock",
-    icon: AlertTriangle,
-    className: "bg-amber-50 text-amber-700",
-  },
-  out: {
-    label: "Out of Stock",
-    icon: XCircle,
-    className: "bg-danger-50 text-danger",
-  },
-};
-
 export default function PharmacyDetailCard({ pharmacy }) {
-  const availability = AVAILABILITY[pharmacy.availability];
-  const AvailabilityIcon = availability.icon;
-  const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(pharmacy.address)}`;
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
+
+  const availabilityMap = {
+    "in-stock": {
+      label: t("pharmacy.inStock"),
+      icon: CheckCircle2,
+      className: "bg-primary-50 text-primary-hover",
+    },
+    limited: {
+      label: t("pharmacy.limitedStock"),
+      icon: AlertTriangle,
+      className: "bg-amber-50 text-amber-700",
+    },
+    out: {
+      label: t("pharmacy.outOfStock"),
+      icon: XCircle,
+      className: "bg-danger-50 text-danger",
+    },
+  };
+
+  const availability = availabilityMap[pharmacy.availability] || availabilityMap["in-stock"];
+  const AvailabilityIcon = availability.icon;
+  const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(pharmacy.address)}`;
+
+  const pharmacyName = formatPharmacyName(pharmacy.name, t);
+  const pharmacyAddress = formatAddress(pharmacy.address, t);
+  const travelTime = formatTravelTime(pharmacy.travelTime, t);
 
   const handleOrderNow = () => {
     if (!isAuthenticated) {
@@ -70,7 +78,7 @@ export default function PharmacyDetailCard({ pharmacy }) {
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-display font-bold text-text leading-snug">{pharmacy.name}</h3>
+              <h3 className="font-display font-bold text-text leading-snug">{pharmacyName}</h3>
               <div className="flex items-center gap-1 mt-1">
                 <Star className="w-3.5 h-3.5 text-warning fill-warning" />
                 <span className="text-sm font-semibold text-text">{pharmacy.rating}</span>
@@ -82,7 +90,7 @@ export default function PharmacyDetailCard({ pharmacy }) {
               pharmacy.isOpen ? "bg-primary-50 text-primary-hover" : "bg-danger-50 text-danger"
             }`}
           >
-            {pharmacy.isOpen ? "Open" : "Closed"}
+            {pharmacy.isOpen ? t("pharmacy.open") : t("pharmacy.closed")}
           </span>
         </div>
 
@@ -100,27 +108,31 @@ export default function PharmacyDetailCard({ pharmacy }) {
             <MapPin className="w-4 h-4 shrink-0" />
             {pharmacy.distance}
           </span>
-          <span className="flex items-center gap-1.5">
-            <Car className="w-4 h-4 shrink-0" />
-            {pharmacy.travelTime.drive}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Footprints className="w-4 h-4 shrink-0" />
-            {pharmacy.travelTime.walk}
-          </span>
+          {travelTime?.drive && (
+            <span className="flex items-center gap-1.5">
+              <Car className="w-4 h-4 shrink-0" />
+              {travelTime.drive}
+            </span>
+          )}
+          {travelTime?.walk && (
+            <span className="flex items-center gap-1.5">
+              <Footprints className="w-4 h-4 shrink-0" />
+              {travelTime.walk}
+            </span>
+          )}
         </div>
 
         {/* Closing/opening time */}
         <p className="mt-2 flex items-center gap-1.5 text-sm text-text-muted">
           <Clock className="w-4 h-4 shrink-0" />
-          {pharmacy.isOpen ? `Closes ${pharmacy.closingTime}` : `Opens ${pharmacy.openingTime}`}
+          {pharmacy.isOpen ? `${t("pharmacy.closesAt")} ${pharmacy.closingTime}` : `${t("pharmacy.opensAt")} ${pharmacy.openingTime}`}
         </p>
 
         {/* Address + phone */}
         <div className="mt-2 space-y-1.5">
           <p className="flex items-center gap-1.5 text-sm text-text-muted">
             <MapPin className="w-4 h-4 shrink-0 opacity-0" />
-            <span className="-ml-[22px]">{pharmacy.address}</span>
+            <span className="-ml-[22px]">{pharmacyAddress}</span>
           </p>
           <p className="flex items-center gap-1.5 text-sm text-text-muted">
             <Phone className="w-4 h-4 shrink-0" />
@@ -145,7 +157,7 @@ export default function PharmacyDetailCard({ pharmacy }) {
             icon={MapPin}
             className="flex-1 !bg-primary-50 hover:!bg-primary-100"
           >
-            View on Map
+            {t("pharmacy.viewMap")}
           </Button>
           <Button
             as="a"
@@ -157,17 +169,17 @@ export default function PharmacyDetailCard({ pharmacy }) {
             icon={Navigation}
             className="flex-1"
           >
-            Get Directions
+            {t("pharmacy.getDirections")}
           </Button>
         </div>
 
         {pharmacy.otc ? (
           <Button variant="primary" size="sm" icon={ShoppingCart} onClick={handleOrderNow} className="w-full">
-            Order Now
+            {t("medicine.orderNow")}
           </Button>
         ) : (
           <div className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-text-muted bg-slate-100 rounded-xl py-2.5">
-            <Lock className="w-3.5 h-3.5" /> Prescription Required
+            <Lock className="w-3.5 h-3.5" /> {t("medicine.prescriptionRequired")}
           </div>
         )}
       </div>

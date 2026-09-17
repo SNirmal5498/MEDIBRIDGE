@@ -6,12 +6,14 @@ import { medicineService } from "../../services/medicineService";
 import FilterSortBar from "../../components/medicine/FilterSortBar";
 import MedicineCard from "../../components/medicine/MedicineCard";
 import Button from "../../components/common/Button";
+import { useLanguage } from "../../hooks/useLanguage";
 
 const ITEMS_PER_PAGE = 12;
 
 export default function Medicine() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [debouncedQuery, setDebouncedQuery] = useState(query);
@@ -73,8 +75,12 @@ export default function Medicine() {
         limit: ITEMS_PER_PAGE,
       });
 
-      if (response && response.data) {
-        setMedicines(response.data);
+      console.log("API response:", response);
+      console.log("Medicines received:", response.medicines);
+      console.log("Medicine count:", response.medicines?.length);
+
+      if (response && Array.isArray(response.medicines)) {
+        setMedicines(response.medicines);
         if (response.pagination) {
           setPagination(response.pagination);
         }
@@ -122,8 +128,8 @@ export default function Medicine() {
     async function loadPopular() {
       try {
         const res = await medicineService.getPopular(4);
-        if (isMounted && res && res.data) {
-          setPopularMedicines(res.data);
+        if (isMounted && res && Array.isArray(res.medicines) && res.medicines.length > 0) {
+          setPopularMedicines(res.medicines);
           return;
         }
       } catch (e) {
@@ -150,8 +156,8 @@ export default function Medicine() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-28">
       <div className="mb-8">
-        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-text">Compare Medicines</h1>
-        <p className="mt-1.5 text-text-muted">Search, filter, and compare brands to find the right medicine.</p>
+        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-text">{t("medicine.title")}</h1>
+        <p className="mt-1.5 text-text-muted">{t("medicine.subtitle")}</p>
       </div>
 
       <FilterSortBar
@@ -167,7 +173,7 @@ export default function Medicine() {
 
       {recentlyViewed.length > 0 && (
         <section className="mt-10">
-          <h2 className="font-display font-bold text-lg text-text mb-4">Recently Viewed</h2>
+          <h2 className="font-display font-bold text-lg text-text mb-4">{t("medicine.recentlyViewed")}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {recentlyViewed.map((m) => (
               <MedicineCard
@@ -186,16 +192,16 @@ export default function Medicine() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display font-bold text-lg text-text">
             {loading ? (
-              "Loading medicines..."
+              t("medicine.loading")
             ) : query || category !== "all" || filter !== "all" ? (
-              `${pagination.total} results found`
+              `${pagination.total} ${t("medicine.resultsFound")}`
             ) : (
-              `All Medicines (${pagination.total})`
+              `${t("medicine.allMedicines")} (${pagination.total})`
             )}
           </h2>
           {pagination.totalPages > 1 && (
             <span className="text-xs text-text-muted">
-              Page {pagination.page} of {pagination.totalPages}
+              {t("medicine.page")} {pagination.page} {t("medicine.of")} {pagination.totalPages}
             </span>
           )}
         </div>
@@ -203,12 +209,12 @@ export default function Medicine() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-text-muted">
             <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
-            <p className="text-sm">Fetching medicines from catalog...</p>
+            <p className="text-sm">{t("medicine.loading")}</p>
           </div>
         ) : medicines.length === 0 ? (
           <div className="text-center py-16 card">
-            <p className="text-text font-semibold text-base">No medicines match your search</p>
-            <p className="text-text-muted text-sm mt-1">Try checking for typos or selecting a different category filter.</p>
+            <p className="text-text font-semibold text-base">{t("medicine.noMedicines")}</p>
+            <p className="text-text-muted text-sm mt-1">{t("medicine.noMedicinesDesc")}</p>
           </div>
         ) : (
           <>
@@ -237,7 +243,7 @@ export default function Medicine() {
                     window.scrollTo({ top: 300, behavior: "smooth" });
                   }}
                 >
-                  Previous
+                  {t("medicine.previous")}
                 </Button>
 
                 <div className="flex items-center gap-1 mx-2">
@@ -281,7 +287,7 @@ export default function Medicine() {
                     window.scrollTo({ top: 300, behavior: "smooth" });
                   }}
                 >
-                  Next
+                  {t("medicine.next")}
                   <ChevronRight className="w-4 h-4 ml-1.5" />
                 </Button>
               </div>
@@ -292,7 +298,7 @@ export default function Medicine() {
 
       {category === "all" && !query && popularMedicines.length > 0 && (
         <section className="mt-14">
-          <h2 className="font-display font-bold text-lg text-text mb-4">Popular Medicines</h2>
+          <h2 className="font-display font-bold text-lg text-text mb-4">{t("medicine.popularMedicines")}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {popularMedicines.map((m) => (
               <MedicineCard
@@ -309,7 +315,7 @@ export default function Medicine() {
 
       {compareIds.length > 0 && (
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 card px-5 py-3.5 flex items-center gap-4 shadow-card-hover border border-primary/20 bg-white/95 backdrop-blur-md">
-          <span className="text-sm font-semibold text-text">{compareIds.length}/2 selected</span>
+          <span className="text-sm font-semibold text-text">{compareIds.length}/2 {t("medicine.compareSelected")}</span>
           <Button
             variant="primary"
             size="sm"
@@ -317,7 +323,7 @@ export default function Medicine() {
             disabled={compareIds.length < 2}
             onClick={() => navigate(`/compare?a=${compareIds[0]}&b=${compareIds[1]}`)}
           >
-            Compare now
+            {t("medicine.compareNow")}
           </Button>
           <button
             onClick={() => setCompareIds([])}

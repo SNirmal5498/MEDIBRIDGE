@@ -1,30 +1,33 @@
 import { Star, MapPin, Phone, Clock, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
-
-const AVAILABILITY = {
-  "in-stock": {
-    label: "In Stock",
-    icon: CheckCircle2,
-    className: "bg-primary-50 text-primary-hover",
-  },
-  limited: {
-    label: "Limited Stock",
-    icon: AlertTriangle,
-    className: "bg-amber-50 text-amber-700",
-  },
-  out: {
-    label: "Out of Stock",
-    icon: XCircle,
-    className: "bg-danger-50 text-danger",
-  },
-};
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function PharmacySummary({ pharmacy }) {
+  const { t } = useLanguage();
+
+  const AVAILABILITY = {
+    "in-stock": {
+      label: t("pharmacy.inStock"),
+      icon: CheckCircle2,
+      className: "bg-primary-50 text-primary-hover",
+    },
+    limited: {
+      label: t("pharmacy.limitedStock"),
+      icon: AlertTriangle,
+      className: "bg-amber-50 text-amber-700",
+    },
+    out: {
+      label: t("pharmacy.outOfStock"),
+      icon: XCircle,
+      className: "bg-danger-50 text-danger",
+    },
+  };
+
   const availability = AVAILABILITY["in-stock"];
   const AvailabilityIcon = availability.icon;
 
   return (
     <div className="card p-6">
-      <h3 className="font-display font-bold text-lg text-text mb-4">Pharmacy Information</h3>
+      <h3 className="font-display font-bold text-lg text-text mb-4">{t("checkout.pharmacyInfo")}</h3>
       <div className="space-y-3">
         <div className="flex items-start gap-3">
           <div className="grid place-items-center w-10 h-10 rounded-xl bg-primary-50 text-primary-hover shrink-0">
@@ -58,9 +61,10 @@ export default function PharmacySummary({ pharmacy }) {
         </div>
         <div className="flex items-center gap-2 text-sm text-text-muted">
           <Clock className="w-4 h-4 shrink-0" />
-          <span>Preparation: 15–20 minutes</span>
+          <span>{t("checkout.preparationTime")}</span>
         </div>
       </div>
     </div>
   );
 }
+

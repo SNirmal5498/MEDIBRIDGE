@@ -1,19 +1,21 @@
 import { Minus, Plus, Trash2 } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function OrderSummary({ items, onUpdateQuantity, onRemove }) {
+  const { t } = useLanguage();
   const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
 
   if (items.length === 0) {
     return (
       <div className="card p-6 text-center">
-        <p className="text-text-muted">No items in cart</p>
+        <p className="text-text-muted">{t("checkout.noItems")}</p>
       </div>
     );
   }
 
   return (
     <div className="card p-6">
-      <h3 className="font-display font-bold text-lg text-text mb-4">Order Summary</h3>
+      <h3 className="font-display font-bold text-lg text-text mb-4">{t("checkout.orderSummary")}</h3>
       <div className="space-y-4">
         {items.map((item) => (
           <div key={`${item.medicineId}-${item.pharmacyId}`} className="flex items-start gap-3 pb-4 border-b border-border last:border-0 last:pb-0">
@@ -56,3 +58,4 @@ export default function OrderSummary({ items, onUpdateQuantity, onRemove }) {
     </div>
   );
 }
+
