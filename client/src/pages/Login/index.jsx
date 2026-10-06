@@ -37,7 +37,7 @@ export default function Login() {
       navigate("/");
     } catch (err) {
       setError(
-        err.response?.data?.message || "Invalid email or password."
+        err.response?.data?.message || t("auth.loginError")
       );
     } finally {
       setLoading(false);

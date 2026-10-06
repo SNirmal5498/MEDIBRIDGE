@@ -169,6 +169,7 @@ export default function Medicine() {
         onSortChange={handleSortChange}
         category={category}
         onCategoryChange={handleCategoryChange}
+        onSelectMedicine={(med) => navigate(`/medicine/${med.id || med._id}`)}
       />
 
       {recentlyViewed.length > 0 && (

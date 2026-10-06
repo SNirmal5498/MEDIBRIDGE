@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Building2, MapPin, Phone, Navigation, Star } from "lucide-react";
 import Button from "../common/Button";
 import { useLanguage } from "../../hooks/useLanguage";
+import { formatAddress, formatPharmacyName } from "../../utils/formatters";
 
 export default function SavedPharmacies({ pharmacies, onRemove }) {
   const { t } = useLanguage();
@@ -34,12 +35,14 @@ export default function SavedPharmacies({ pharmacies, onRemove }) {
             const directionsUrl = `https://maps.google.com/dir/?api=1&destination=${encodeURIComponent(
               pharmacy.address
             )}`;
+            const name = formatPharmacyName(pharmacy.name, t);
+            const address = formatAddress(pharmacy.address, t);
 
             return (
               <article key={pharmacy.id} className="card p-5 flex flex-col">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="font-display font-bold text-text">{pharmacy.name}</h3>
+                    <h3 className="font-display font-bold text-text">{name}</h3>
                     <div className="flex items-center gap-1 mt-1">
                       <Star className="w-3.5 h-3.5 text-warning fill-warning" />
                       <span className="text-sm font-semibold text-text">{pharmacy.rating}</span>
@@ -57,7 +60,7 @@ export default function SavedPharmacies({ pharmacies, onRemove }) {
                 <div className="mt-4 space-y-2 flex-1">
                   <p className="flex items-center gap-2 text-sm text-text-muted">
                     <MapPin className="w-4 h-4 shrink-0" />
-                    {pharmacy.address} · {pharmacy.distance}
+                    {address} · {pharmacy.distance}
                   </p>
                   <p className="flex items-center gap-2 text-sm text-text-muted">
                     <Phone className="w-4 h-4 shrink-0" />

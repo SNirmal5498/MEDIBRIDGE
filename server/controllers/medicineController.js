@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Medicine = require("../models/Medicine");
+const { translateMedicine } = require("../utils/translator");
 
 // Helper to sanitize regex input
 function escapeRegex(text) {
@@ -110,9 +111,15 @@ const getMedicineById = async (req, res) => {
       });
     }
 
+    const lang = (req.query.lang || "en").toLowerCase();
+    let finalMedicine = medicine;
+    if (lang !== "en") {
+      finalMedicine = await translateMedicine(medicine, lang);
+    }
+
     res.status(200).json({
       success: true,
-      medicine,
+      medicine: finalMedicine,
     });
   } catch (error) {
     console.error("Error in getMedicineById:", error);

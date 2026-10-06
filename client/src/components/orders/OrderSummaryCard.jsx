@@ -1,7 +1,7 @@
 import { MapPin, Calendar } from "lucide-react";
 import OrderTimeline from "./OrderTimeline";
 import { useLanguage } from "../../hooks/useLanguage";
-import { formatDate, formatDateTime, formatAddress, formatStateName } from "../../utils/formatters";
+import { formatDate, formatDateTime, formatAddress, formatStateName, formatBrandName } from "../../utils/formatters";
 
 function formatDeliveryAddress(deliveryAddress, t, languageCode) {
   if (!deliveryAddress) return t("profile.noAddress");
@@ -42,7 +42,7 @@ export default function OrderSummaryCard({ order }) {
           <ul className="space-y-1.5">
             {order.items.map((item) => (
               <li key={item.name} className="flex justify-between text-sm text-text-muted">
-                <span>{item.name} × {item.qty}</span>
+                <span>{formatBrandName(item.name, language.code)} × {item.qty}</span>
                 <span className="text-text">₹{item.price * item.qty}</span>
               </li>
             ))}

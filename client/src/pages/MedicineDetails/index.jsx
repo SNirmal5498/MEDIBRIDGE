@@ -21,6 +21,8 @@ import {
   formatMedicineText,
 } from "../../utils/formatters";
 
+import { useDynamicTranslation } from "../../hooks/useDynamicTranslation";
+
 const RECENT_KEY = "medibridge_recently_viewed";
 
 function saveRecentlyViewed(med) {
@@ -53,6 +55,9 @@ export default function MedicineDetails() {
   const [alternatives, setAlternatives] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  const { data: displayMedicine } = useDynamicTranslation(medicine, "medicine");
+  const activeMed = displayMedicine || medicine;
 
   useEffect(() => {
     let isMounted = true;
@@ -122,7 +127,7 @@ export default function MedicineDetails() {
 
   if (error || !medicine) return <NotFound />;
 
-  const isOtc = medicine.otc === true || medicine.prescriptionRequired === false;
+  const isOtc = activeMed.otc === true || activeMed.prescriptionRequired === false;
 
   const warningLabelMap = {
     pregnancy: t("details.pregnancy"),
@@ -133,13 +138,13 @@ export default function MedicineDetails() {
     driving: t("details.driving"),
   };
 
-  const brand = formatBrandName(medicine.brand || medicine.name, language.code);
-  const generic = formatGenericName(medicine.genericName, language.code);
-  const strength = formatStrength(medicine.strength, language.code);
-  const mfg = formatManufacturer(medicine.manufacturer, language.code);
-  const pack = formatPackSize(medicine.packSize, language.code);
-  const description = formatMedicineText(medicine.description, language.code);
-  const storage = formatMedicineText(medicine.storage, language.code);
+  const brand = formatBrandName(activeMed.brand || activeMed.name, language.code);
+  const generic = formatGenericName(activeMed.genericName, language.code);
+  const strength = formatStrength(activeMed.strength, language.code);
+  const mfg = formatManufacturer(activeMed.manufacturer, language.code);
+  const pack = formatPackSize(activeMed.packSize, language.code);
+  const description = formatMedicineText(activeMed.description, language.code);
+  const storage = formatMedicineText(activeMed.storage, language.code);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -157,7 +162,7 @@ export default function MedicineDetails() {
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-text-muted">
-              {getCategoryTranslation(language.code, medicine.category)}
+              {getCategoryTranslation(language.code, activeMed.category)}
             </span>
             <span
               className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
@@ -181,18 +186,18 @@ export default function MedicineDetails() {
               <dt className="text-sm font-semibold text-text-muted w-36 shrink-0">{t("details.manufacturer")}</dt>
               <dd className="text-sm text-text">{mfg} {pack ? `· ${pack}` : ""}</dd>
             </div>
-            {medicine.rating && (
+            {activeMed.rating && (
               <div className="flex flex-wrap gap-x-2 gap-y-0.5 items-center">
                 <dt className="text-sm font-semibold text-text-muted w-36 shrink-0">{t("details.rating")}</dt>
                 <dd className="flex items-center gap-1">
                   <Star className="w-4 h-4 text-warning fill-warning" />
-                  <span className="text-sm font-semibold text-text">{medicine.rating}</span>
+                  <span className="text-sm font-semibold text-text">{activeMed.rating}</span>
                 </dd>
               </div>
             )}
             <div className="flex flex-wrap gap-x-2 gap-y-0.5 items-baseline">
               <dt className="text-sm font-semibold text-text-muted w-36 shrink-0">{t("details.price")}</dt>
-              <dd className="font-display font-extrabold text-2xl text-primary-hover">₹{medicine.price}</dd>
+              <dd className="font-display font-extrabold text-2xl text-primary-hover">₹{activeMed.price}</dd>
             </div>
           </dl>
 
@@ -206,7 +211,7 @@ export default function MedicineDetails() {
             ) : (
               <Button variant="secondary" icon={Lock} disabled>{t("medicine.prescriptionRequired")}</Button>
             )}
-            <Button variant="secondary" icon={GitCompare} onClick={() => navigate(`/compare?a=${medicine.id}`)}>
+            <Button variant="secondary" icon={GitCompare} onClick={() => navigate(`/compare?a=${activeMed.id}`)}>
               {t("medicine.compare")}
             </Button>
           </div>
@@ -214,41 +219,41 @@ export default function MedicineDetails() {
       </div>
 
       <div className="card p-6 sm:p-8 mt-6">
-        {medicine.uses && medicine.uses.length > 0 && (
+        {activeMed.uses && activeMed.uses.length > 0 && (
           <Section title={t("details.uses")}>
             <ul className="list-disc list-inside space-y-1.5 text-sm text-text">
-              {medicine.uses.map((u) => <li key={u}>{formatMedicineText(u, language.code)}</li>)}
+              {activeMed.uses.map((u) => <li key={u}>{formatMedicineText(u, language.code)}</li>)}
             </ul>
           </Section>
         )}
 
-        {medicine.dosage && (
+        {activeMed.dosage && (
           <Section title={t("details.dosage")}>
             <dl className="grid sm:grid-cols-2 gap-4 text-sm">
-              {medicine.dosage.adults && <div><dt className="font-semibold text-text">{t("details.adults")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(medicine.dosage.adults, language.code)}</dd></div>}
-              {medicine.dosage.children && <div><dt className="font-semibold text-text">{t("details.children")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(medicine.dosage.children, language.code)}</dd></div>}
-              {medicine.dosage.missedDose && <div><dt className="font-semibold text-text">{t("details.missedDose")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(medicine.dosage.missedDose, language.code)}</dd></div>}
-              {medicine.dosage.overdose && <div><dt className="font-semibold text-text">{t("details.overdose")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(medicine.dosage.overdose, language.code)}</dd></div>}
+              {activeMed.dosage.adults && <div><dt className="font-semibold text-text">{t("details.adults")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(activeMed.dosage.adults, language.code)}</dd></div>}
+              {activeMed.dosage.children && <div><dt className="font-semibold text-text">{t("details.children")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(activeMed.dosage.children, language.code)}</dd></div>}
+              {activeMed.dosage.missedDose && <div><dt className="font-semibold text-text">{t("details.missedDose")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(activeMed.dosage.missedDose, language.code)}</dd></div>}
+              {activeMed.dosage.overdose && <div><dt className="font-semibold text-text">{t("details.overdose")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(activeMed.dosage.overdose, language.code)}</dd></div>}
             </dl>
           </Section>
         )}
 
-        {medicine.sideEffects && (
+        {activeMed.sideEffects && (
           <Section title={t("details.sideEffects")}>
             <div className="grid sm:grid-cols-2 gap-4 text-sm">
-              {medicine.sideEffects.common && medicine.sideEffects.common.length > 0 && (
+              {activeMed.sideEffects.common && activeMed.sideEffects.common.length > 0 && (
                 <div>
                   <p className="font-semibold text-text mb-1.5">{t("details.commonSideEffects")}</p>
                   <ul className="list-disc list-inside space-y-1 text-text-muted">
-                    {medicine.sideEffects.common.map((s) => <li key={s}>{formatMedicineText(s, language.code)}</li>)}
+                    {activeMed.sideEffects.common.map((s) => <li key={s}>{formatMedicineText(s, language.code)}</li>)}
                   </ul>
                 </div>
               )}
-              {medicine.sideEffects.rare && medicine.sideEffects.rare.length > 0 && (
+              {activeMed.sideEffects.rare && activeMed.sideEffects.rare.length > 0 && (
                 <div>
                   <p className="font-semibold text-text mb-1.5">{t("details.rareSideEffects")}</p>
                   <ul className="list-disc list-inside space-y-1 text-text-muted">
-                    {medicine.sideEffects.rare.map((s) => <li key={s}>{formatMedicineText(s, language.code)}</li>)}
+                    {activeMed.sideEffects.rare.map((s) => <li key={s}>{formatMedicineText(s, language.code)}</li>)}
                   </ul>
                 </div>
               )}
@@ -256,10 +261,10 @@ export default function MedicineDetails() {
           </Section>
         )}
 
-        {medicine.warnings && (
+        {activeMed.warnings && (
           <Section title={t("details.warnings")}>
             <dl className="grid sm:grid-cols-2 gap-4 text-sm">
-              {Object.entries(medicine.warnings).map(([key, value]) => (
+              {Object.entries(activeMed.warnings).map(([key, value]) => (
                 <div key={key}>
                   <dt className="font-semibold text-text capitalize">{warningLabelMap[key] || key}</dt>
                   <dd className="text-text-muted mt-1">{formatMedicineText(value, language.code)}</dd>
@@ -269,11 +274,11 @@ export default function MedicineDetails() {
           </Section>
         )}
 
-        {medicine.interactions && (
+        {activeMed.interactions && (
           <Section title={t("details.drugInteractions")}>
-            {medicine.interactions.length > 0 ? (
+            {activeMed.interactions.length > 0 ? (
               <ul className="list-disc list-inside space-y-1.5 text-sm text-text-muted">
-                {medicine.interactions.map((i) => <li key={i}>{formatMedicineText(i, language.code)}</li>)}
+                {activeMed.interactions.map((i) => <li key={i}>{formatMedicineText(i, language.code)}</li>)}
               </ul>
             ) : (
               <p className="text-sm text-text-muted">{t("details.noInteractions") || "No major interactions reported."}</p>
@@ -281,16 +286,16 @@ export default function MedicineDetails() {
           </Section>
         )}
 
-        {medicine.foodInteractions && (
+        {activeMed.foodInteractions && (
           <Section title={t("details.foodInteractions")}>
             <dl className="grid sm:grid-cols-2 gap-4 text-sm">
-              {medicine.foodInteractions.beforeFood && <div><dt className="font-semibold text-text">{t("details.beforeFood")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(medicine.foodInteractions.beforeFood, language.code)}</dd></div>}
-              {medicine.foodInteractions.afterFood && <div><dt className="font-semibold text-text">{t("details.afterFood")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(medicine.foodInteractions.afterFood, language.code)}</dd></div>}
+              {activeMed.foodInteractions.beforeFood && <div><dt className="font-semibold text-text">{t("details.beforeFood")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(activeMed.foodInteractions.beforeFood, language.code)}</dd></div>}
+              {activeMed.foodInteractions.afterFood && <div><dt className="font-semibold text-text">{t("details.afterFood")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(activeMed.foodInteractions.afterFood, language.code)}</dd></div>}
             </dl>
-            {medicine.foodInteractions.avoid && medicine.foodInteractions.avoid.length > 0 && (
+            {activeMed.foodInteractions.avoid && activeMed.foodInteractions.avoid.length > 0 && (
               <p className="mt-3 text-sm text-text-muted">
                 <span className="font-semibold text-text">{t("details.foodsToAvoid")}: </span>
-                {medicine.foodInteractions.avoid.map((item) => formatMedicineText(item, language.code)).join(", ")}
+                {activeMed.foodInteractions.avoid.map((item) => formatMedicineText(item, language.code)).join(", ")}
               </p>
             )}
           </Section>

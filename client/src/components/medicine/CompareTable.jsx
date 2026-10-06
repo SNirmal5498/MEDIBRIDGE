@@ -1,12 +1,13 @@
 import { formatINR } from "../../utils/helpers";
 import { useLanguage } from "../../hooks/useLanguage";
+import { formatBrandName, formatStrength, formatMedicineText } from "../../utils/formatters";
 
 export default function CompareTable({ medicines, highlightId }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const ROWS = [
-    { key: "strength", label: t("common.strength") },
-    { key: "manufacturer", label: t("common.manufacturer") },
+    { key: "strength", label: t("common.strength"), format: (v) => formatStrength(v, language.code) },
+    { key: "manufacturer", label: t("common.manufacturer"), format: (v) => formatMedicineText(v, language.code) },
     { key: "price", label: t("details.price"), format: formatINR },
     { key: "otc", label: t("medicine.otc"), format: (v) => (v ? t("common.yes") : t("common.noRxOnly")) },
   ];
@@ -24,7 +25,7 @@ export default function CompareTable({ medicines, highlightId }) {
                   med.id === highlightId ? "text-primary-hover" : "text-text"
                 }`}
               >
-                {med.brand}
+                {formatBrandName(med.brand, language.code)}
               </th>
             ))}
           </tr>

@@ -35,7 +35,7 @@ function loadPrefs(key, fallback) {
 }
 
 export default function AccountSettings({ onChangePassword }) {
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const [panel, setPanel] = useState(null);
   const [notify, setNotify] = useState(() => loadPrefs(NOTIFY_KEY, DEFAULT_NOTIFY));
   const [privacy, setPrivacy] = useState(() => loadPrefs(PRIVACY_KEY, DEFAULT_PRIVACY));
@@ -60,37 +60,37 @@ export default function AccountSettings({ onChangePassword }) {
     {
       id: "password",
       icon: Lock,
-      title: "Change Password",
-      description: "Update the password used to sign in.",
+      title: t("settings.changePassword"),
+      description: t("settings.changePasswordDesc"),
       onClick: onChangePassword,
     },
     {
       id: "notifications",
       icon: Bell,
-      title: "Notification Preferences",
-      description: "Choose which alerts you want to receive.",
+      title: t("settings.notifications"),
+      description: t("settings.notificationsDesc"),
       onClick: () => setPanel((p) => (p === "notifications" ? null : "notifications")),
     },
     {
       id: "language",
       icon: Globe,
-      title: "Language Preference",
+      title: t("settings.languagePref"),
       description: language.label,
       onClick: () => setPanel((p) => (p === "language" ? null : "language")),
     },
     {
       id: "privacy",
       icon: Shield,
-      title: "Privacy Settings",
-      description: "Control how MediBridge uses your data.",
+      title: t("settings.privacy"),
+      description: t("settings.privacyDesc"),
       onClick: () => setPanel((p) => (p === "privacy" ? null : "privacy")),
     },
   ];
 
   return (
     <section className="card p-6 sm:p-8">
-      <h2 className="font-display font-bold text-lg text-text">Account Settings</h2>
-      <p className="mt-1 text-sm text-text-muted">Manage security, alerts, language, and privacy.</p>
+      <h2 className="font-display font-bold text-lg text-text">{t("settings.title")}</h2>
+      <p className="mt-1 text-sm text-text-muted">{t("settings.subtitle")}</p>
 
       <div className="mt-5 divide-y divide-border">
         {rows.map((row) => {
@@ -115,17 +115,17 @@ export default function AccountSettings({ onChangePassword }) {
               {panel === row.id && row.id === "notifications" && (
                 <div className="pb-4 pl-14 space-y-2">
                   <Toggle
-                    label="Order updates"
+                    label={t("settings.orderUpdates")}
                     checked={notify.orderUpdates}
                     onChange={() => toggleNotify("orderUpdates")}
                   />
                   <Toggle
-                    label="Medicine reminders"
+                    label={t("settings.medicineReminders")}
                     checked={notify.medicineReminders}
                     onChange={() => toggleNotify("medicineReminders")}
                   />
                   <Toggle
-                    label="Nearby pharmacy alerts"
+                    label={t("settings.pharmacyAlerts")}
                     checked={notify.pharmacyAlerts}
                     onChange={() => toggleNotify("pharmacyAlerts")}
                   />
@@ -154,12 +154,12 @@ export default function AccountSettings({ onChangePassword }) {
               {panel === row.id && row.id === "privacy" && (
                 <div className="pb-4 pl-14 space-y-2">
                   <Toggle
-                    label="Use location for nearby pharmacies"
+                    label={t("settings.useLocation")}
                     checked={privacy.shareLocation}
                     onChange={() => togglePrivacy("shareLocation")}
                   />
                   <Toggle
-                    label="Personalized medicine suggestions"
+                    label={t("settings.personalizedSuggestions")}
                     checked={privacy.personalizedSuggestions}
                     onChange={() => togglePrivacy("personalizedSuggestions")}
                   />
@@ -197,6 +197,7 @@ function Toggle({ label, checked, onChange }) {
 }
 
 export function ChangePasswordModal({ open, onClose, onSubmit }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     currentPassword: "",
     newPassword: "",
@@ -218,7 +219,7 @@ export function ChangePasswordModal({ open, onClose, onSubmit }) {
     setSuccess("");
 
     if (form.newPassword !== form.confirmPassword) {
-      setError("New passwords do not match.");
+      setError(t("settings.passwordMismatch"));
       return;
     }
 
@@ -228,10 +229,10 @@ export function ChangePasswordModal({ open, onClose, onSubmit }) {
         currentPassword: form.currentPassword,
         newPassword: form.newPassword,
       });
-      setSuccess("Password updated successfully.");
+      setSuccess(t("settings.passwordUpdated"));
       setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (err) {
-      setError(err.response?.data?.message || "Could not update password.");
+      setError(err.response?.data?.message || t("settings.passwordUpdateError"));
     } finally {
       setLoading(false);
     }
@@ -239,23 +240,23 @@ export function ChangePasswordModal({ open, onClose, onSubmit }) {
 
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center px-4" role="dialog" aria-modal="true">
-      <button type="button" className="absolute inset-0 bg-slate-900/40" aria-label="Close" onClick={onClose} />
+      <button type="button" className="absolute inset-0 bg-slate-900/40" aria-label={t("common.close")} onClick={onClose} />
       <form onSubmit={handleSubmit} className="relative w-full max-w-md card p-6 sm:p-7 space-y-4">
         <button
           type="button"
           onClick={onClose}
           className="absolute top-4 right-4 p-1 rounded-lg text-text-muted hover:bg-slate-100"
-          aria-label="Close"
+          aria-label={t("common.close")}
         >
           <X className="w-4 h-4" />
         </button>
-        <h3 className="font-display font-bold text-lg text-text pr-8">Change Password</h3>
+        <h3 className="font-display font-bold text-lg text-text pr-8">{t("settings.changePassword")}</h3>
 
         {error && <div className="rounded-lg bg-danger-50 text-danger text-sm px-3.5 py-2.5">{error}</div>}
         {success && <div className="rounded-lg bg-primary-50 text-primary-hover text-sm px-3.5 py-2.5">{success}</div>}
 
         <div>
-          <label className="block text-sm font-medium text-text mb-1.5">Current password</label>
+          <label className="block text-sm font-medium text-text mb-1.5">{t("settings.currentPassword")}</label>
           <input
             type="password"
             name="currentPassword"
@@ -267,7 +268,7 @@ export function ChangePasswordModal({ open, onClose, onSubmit }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-text mb-1.5">New password</label>
+          <label className="block text-sm font-medium text-text mb-1.5">{t("settings.newPassword")}</label>
           <input
             type="password"
             name="newPassword"
@@ -280,7 +281,7 @@ export function ChangePasswordModal({ open, onClose, onSubmit }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-text mb-1.5">Confirm new password</label>
+          <label className="block text-sm font-medium text-text mb-1.5">{t("settings.confirmPassword")}</label>
           <input
             type="password"
             name="confirmPassword"
@@ -295,10 +296,10 @@ export function ChangePasswordModal({ open, onClose, onSubmit }) {
 
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="secondary" size="sm" onClick={onClose}>
-            Cancel
+            {t("profile.cancel")}
           </Button>
           <Button type="submit" variant="primary" size="sm" disabled={loading}>
-            {loading ? "Updating..." : "Update Password"}
+            {loading ? t("settings.updating") : t("settings.updatePassword")}
           </Button>
         </div>
       </form>

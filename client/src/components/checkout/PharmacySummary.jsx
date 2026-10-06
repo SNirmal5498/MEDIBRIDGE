@@ -1,8 +1,9 @@
 import { Star, MapPin, Phone, Clock, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
-import { useLanguage } from "../../context/LanguageContext";
+import { useLanguage } from "../../hooks/useLanguage";
+import { formatPharmacyName, formatAddress } from "../../utils/formatters";
 
 export default function PharmacySummary({ pharmacy }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const AVAILABILITY = {
     "in-stock": {
@@ -34,7 +35,7 @@ export default function PharmacySummary({ pharmacy }) {
             <Star className="w-5 h-5" />
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-text">{pharmacy.name}</p>
+            <p className="font-semibold text-text">{formatPharmacyName(pharmacy.name, language.code, t)}</p>
             <div className="flex items-center gap-1 mt-1">
               <Star className="w-3.5 h-3.5 text-warning fill-warning" />
               <span className="text-sm font-semibold text-text">{pharmacy.rating}</span>
@@ -43,7 +44,7 @@ export default function PharmacySummary({ pharmacy }) {
         </div>
         <div className="flex items-center gap-2 text-sm text-text-muted">
           <MapPin className="w-4 h-4 shrink-0" />
-          <span>{pharmacy.address}</span>
+          <span>{formatAddress(pharmacy.address, language.code, t)}</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-text-muted">
           <Phone className="w-4 h-4 shrink-0" />

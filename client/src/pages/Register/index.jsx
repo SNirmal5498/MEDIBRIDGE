@@ -41,7 +41,7 @@ export default function Register() {
     } catch (err) {
       setError(
         err.response?.data?.message ||
-        "Could not create account. Try again."
+        t("auth.registerError")
       );
     } finally {
       setLoading(false);

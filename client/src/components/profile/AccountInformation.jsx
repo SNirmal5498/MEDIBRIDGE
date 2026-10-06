@@ -4,7 +4,7 @@ import { useLanguage } from "../../hooks/useLanguage";
 
 export default function AccountInformation({ user }) {
   const { t } = useLanguage();
-  const role = user?.role === "admin" ? "Admin" : "User";
+  const role = user?.role === "admin" ? t("profile.admin") : t("profile.user");
   const active = (user?.accountStatus || "active") === "active";
   const verified = Boolean(user?.emailVerified);
 
@@ -51,7 +51,7 @@ export default function AccountInformation({ user }) {
       {!verified && (
         <p className="mt-4 flex items-start gap-2 text-xs text-text-muted">
           <ShieldCheck className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary-hover" />
-          Email verification status.
+          {t("profile.emailStatusDesc")}
         </p>
       )}
     </section>

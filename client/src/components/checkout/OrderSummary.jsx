@@ -1,8 +1,9 @@
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { useLanguage } from "../../context/LanguageContext";
+import { useLanguage } from "../../hooks/useLanguage";
+import { formatBrandName, formatGenericName, formatStrength } from "../../utils/formatters";
 
 export default function OrderSummary({ items, onUpdateQuantity, onRemove }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
 
   if (items.length === 0) {
@@ -20,9 +21,9 @@ export default function OrderSummary({ items, onUpdateQuantity, onRemove }) {
         {items.map((item) => (
           <div key={`${item.medicineId}-${item.pharmacyId}`} className="flex items-start gap-3 pb-4 border-b border-border last:border-0 last:pb-0">
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-text">{item.medicineName}</p>
+              <p className="font-semibold text-text">{formatBrandName(item.medicineName, language.code)}</p>
               <p className="text-sm text-text-muted">
-                {item.genericName} • {item.strength}
+                {formatGenericName(item.genericName, language.code)} • {formatStrength(item.strength, language.code)}
               </p>
               <p className="text-sm text-text-muted mt-1">
                 ₹{item.unitPrice} × {item.quantity}

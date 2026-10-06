@@ -1,7 +1,8 @@
-import { Search, ArrowUpDown } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 import { CATEGORIES } from "../../utils/medicineData";
 import { useLanguage } from "../../hooks/useLanguage";
 import { getCategoryTranslation } from "../../i18n/i18n";
+import MedicineAutocompleteSearch from "./MedicineAutocompleteSearch";
 
 export default function FilterSortBar({
   query,
@@ -12,6 +13,7 @@ export default function FilterSortBar({
   onSortChange,
   category,
   onCategoryChange,
+  onSelectMedicine,
 }) {
   const { t, language } = useLanguage();
 
@@ -30,17 +32,13 @@ export default function FilterSortBar({
 
   return (
     <div className="space-y-4">
-      {/* Search */}
-      <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 shadow-card">
-        <Search className="w-4 h-4 text-text-muted shrink-0" />
-        <input
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          type="text"
-          placeholder={t("filter.searchPlaceholder")}
-          className="w-full text-sm focus:outline-none bg-transparent"
-        />
-      </div>
+      {/* Autocomplete Search */}
+      <MedicineAutocompleteSearch
+        value={query}
+        onChange={onQueryChange}
+        onSubmit={(q) => onQueryChange(q)}
+        onSelect={onSelectMedicine}
+      />
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         {/* All/OTC/Prescription filter */}
