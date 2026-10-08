@@ -175,13 +175,12 @@ medicineSchema.index({
 });
 
 // Sync otc with prescriptionRequired before validation
-medicineSchema.pre("validate", function (next) {
+medicineSchema.pre("validate", function () {
   if (this.prescriptionRequired !== undefined) {
     this.otc = !this.prescriptionRequired;
   } else if (this.otc !== undefined) {
     this.prescriptionRequired = !this.otc;
   }
-  next();
 });
 
 module.exports = mongoose.model("Medicine", medicineSchema);

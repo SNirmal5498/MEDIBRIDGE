@@ -75,9 +75,15 @@ const getMedicines = async (req, res) => {
 
     const totalPages = Math.ceil(total / limit) || 1;
 
+    const lang = (req.query.lang || "en").toLowerCase();
+    let finalMedicines = medicines;
+    if (lang !== "en") {
+      finalMedicines = await Promise.all(medicines.map((m) => translateMedicine(m, lang)));
+    }
+
     res.status(200).json({
       success: true,
-      medicines,
+      medicines: finalMedicines,
       total,
       page,
       totalPages,
@@ -167,9 +173,15 @@ const getAlternatives = async (req, res) => {
       .limit(8)
       .lean();
 
+    const lang = (req.query.lang || "en").toLowerCase();
+    let finalAlternatives = alternatives;
+    if (lang !== "en") {
+      finalAlternatives = await Promise.all(alternatives.map((m) => translateMedicine(m, lang)));
+    }
+
     res.status(200).json({
       success: true,
-      alternatives,
+      alternatives: finalAlternatives,
     });
   } catch (error) {
     console.error("Error in getAlternatives:", error);
@@ -188,9 +200,15 @@ const getPopularMedicines = async (req, res) => {
       .limit(limit)
       .lean();
 
+    const lang = (req.query.lang || "en").toLowerCase();
+    let finalMedicines = medicines;
+    if (lang !== "en") {
+      finalMedicines = await Promise.all(medicines.map((m) => translateMedicine(m, lang)));
+    }
+
     res.status(200).json({
       success: true,
-      medicines,
+      medicines: finalMedicines,
     });
   } catch (error) {
     console.error("Error in getPopularMedicines:", error);
@@ -238,9 +256,15 @@ const compareMedicines = async (req, res) => {
 
     const medicines = await Medicine.find({ $or: conditions }).lean();
 
+    const lang = (req.query.lang || "en").toLowerCase();
+    let finalMedicines = medicines;
+    if (lang !== "en") {
+      finalMedicines = await Promise.all(medicines.map((m) => translateMedicine(m, lang)));
+    }
+
     res.status(200).json({
       success: true,
-      medicines,
+      medicines: finalMedicines,
     });
   } catch (error) {
     console.error("Error in compareMedicines:", error);

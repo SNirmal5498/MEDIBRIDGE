@@ -40,6 +40,28 @@ function HighlightedText({ text, query, className = "" }) {
   );
 }
 
+function levenshteinDistance(a, b) {
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  return matrix[b.length][a.length];
+}
+
 export default function MedicineAutocompleteSearch({
   value = "",
   onChange,
@@ -131,6 +153,14 @@ export default function MedicineAutocompleteSearch({
           // Priority 6: Uses / description
           else if (usesStr.includes(q) || (med.description || "").toLowerCase().includes(q)) {
             score = 30;
+          }
+          // Priority 7: Typo-tolerant Levenshtein fuzzy match for queries length >= 4
+          else if (q.length >= 4) {
+            const distBrand = levenshteinDistance(q, brandEn.slice(0, q.length + 1));
+            const distGeneric = levenshteinDistance(q, genericEn.slice(0, q.length + 1));
+            if (distBrand <= 2 || distGeneric <= 2) {
+              score = 25;
+            }
           }
 
           if (score > 0) {

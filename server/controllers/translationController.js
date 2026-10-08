@@ -43,12 +43,12 @@ const translate = async (req, res) => {
       translated: translatedText,
     });
   } catch (error) {
-    console.error("Error in translationController.translate:", error);
-    res.status(500).json({
+    console.error("Error in translationController.translate:", error.message);
+    res.status(200).json({
       success: false,
-      message: "Translation failed",
-      fallback: req.body.text || req.body.texts || "",
-      error: error.message,
+      targetLang: req.body.targetLang || "en",
+      translated: req.body.text || req.body.texts || "",
+      message: "Translation fallback applied",
     });
   }
 };
@@ -85,12 +85,12 @@ const translateObjectEndpoint = async (req, res) => {
       translatedObject: translatedObj,
     });
   } catch (error) {
-    console.error("Error in translateObjectEndpoint:", error);
-    res.status(500).json({
+    console.error("Error in translateObjectEndpoint:", error.message);
+    res.status(200).json({
       success: false,
-      message: "Object translation failed",
-      fallback: req.body.object || {},
-      error: error.message,
+      targetLang: req.body.targetLang || "en",
+      translatedObject: req.body.object || {},
+      message: "Object translation fallback applied",
     });
   }
 };

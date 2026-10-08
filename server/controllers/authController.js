@@ -102,9 +102,10 @@ const loginUser = async (req, res) => {
 
         const token = jwt.sign(
             {
-                id: user._id
+                id: user._id,
+                role: user.role,
             },
-            process.env.JWT_SECRET,
+            process.env.JWT_SECRET || "medibridge_secret_key",
             {
                 expiresIn: "1d"
             }
@@ -129,7 +130,8 @@ const loginUser = async (req, res) => {
 
 const getProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select("-password");
+        const userId = req.user?._id || req.user?.id;
+        const user = await User.findById(userId).select("-password");
 
         if (!user) {
             return res.status(404).json({
@@ -155,7 +157,8 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        const userId = req.user?._id || req.user?.id;
+        const user = await User.findById(userId);
 
         if (!user) {
             return res.status(404).json({

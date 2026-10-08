@@ -86,9 +86,43 @@ const createOrder = async (req, res) => {
       }
     }
 
+    // Inventory Stock Safety Check & Stock Reduction
+    const Inventory = require("../models/Inventory");
+    for (const item of items) {
+      const inv = await Inventory.findOne({ pharmacyId: pharmacy.id, medicineId: item.medicineId });
+      if (inv) {
+        if (inv.stock < item.quantity) {
+          return res.status(400).json({
+            success: false,
+            message: inv.stock === 0
+              ? `Item '${item.medicineName}' is currently Out of Stock`
+              : `Only ${inv.stock} units of '${item.medicineName}' are currently available.`,
+          });
+        }
+      }
+    }
+
+    // Deduct stock quantity in Inventory
+    for (const item of items) {
+      const inv = await Inventory.findOne({ pharmacyId: pharmacy.id, medicineId: item.medicineId });
+      if (inv) {
+        inv.stock -= item.quantity;
+        if (inv.stock <= 0) {
+          inv.stock = 0;
+          inv.availability = "out";
+        } else if (inv.stock <= 5) {
+          inv.availability = "limited";
+        }
+        await inv.save();
+      }
+    }
+
     // Calculate totals
-    const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
-    const deliveryFee = 40;
+    const Settings = require("../models/Settings");
+    const globalSettings = await Settings.findOne({ key: "global_platform_settings" });
+    const deliveryFee = globalSettings?.deliveryFee ?? 40;
+
+    const subtotal = items.reduce((sum, item) => sum + (item.totalPrice || item.unitPrice * item.quantity), 0);
     const discount = 0;
     const totalAmount = subtotal + deliveryFee - discount;
 
@@ -109,8 +143,9 @@ const createOrder = async (req, res) => {
     ];
 
     // Create order
+    const userId = req.user._id || req.user.id;
     const order = new Order({
-      user: req.user.id,
+      user: userId,
       orderId,
       items,
       pharmacy,

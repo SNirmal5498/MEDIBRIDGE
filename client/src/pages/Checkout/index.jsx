@@ -38,6 +38,7 @@ export default function Checkout() {
   const [error, setError] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [createdOrder, setCreatedOrder] = useState(null);
+  const [attachedPrescription, setAttachedPrescription] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -101,8 +102,8 @@ export default function Checkout() {
       return medicine && !medicine.otc;
     });
 
-    if (hasPrescriptionMedicine) {
-      setError(t("checkout.prescriptionRequiredDesc"));
+    if (hasPrescriptionMedicine && !attachedPrescription) {
+      setError("Doctor's prescription must be uploaded before placing an order containing prescription medicines.");
       return;
     }
 
@@ -122,12 +123,12 @@ export default function Checkout() {
           otc: item.otc,
         })),
         pharmacy: {
-          id: selectedPharmacy?.id || "default",
-          name: selectedPharmacy?.name || "Pharmacy",
-          address: selectedPharmacy?.address || "",
-          phone: selectedPharmacy?.phone || "",
-          rating: selectedPharmacy?.rating || 4.5,
-          distance: selectedPharmacy?.distance || "1 km",
+          id: selectedPharmacy?.id || "pharm-001",
+          name: selectedPharmacy?.name || "MedPlus Pharmacy",
+          address: selectedPharmacy?.address || "Coimbatore",
+          phone: selectedPharmacy?.phone || "+91 98421 10001",
+          rating: selectedPharmacy?.rating || 4.8,
+          distance: selectedPharmacy?.distance || "0.8 km",
         },
         deliveryAddress: {
           fullName: deliveryAddress.fullName,
@@ -140,6 +141,7 @@ export default function Checkout() {
           pincode: deliveryAddress.pincode,
         },
         paymentMethod,
+        prescriptionId: attachedPrescription?._id || null,
       };
 
       const response = await orderService.createOrder(orderData);
@@ -206,7 +208,7 @@ export default function Checkout() {
 
       {hasPrescriptionMedicine && (
         <div className="mb-6">
-          <PrescriptionWarning />
+          <PrescriptionWarning onPrescriptionUploaded={(rx) => setAttachedPrescription(rx)} />
         </div>
       )}
 
@@ -231,7 +233,7 @@ export default function Checkout() {
           <PriceSummary subtotal={subtotal} />
           <Button
             onClick={handlePlaceOrder}
-            disabled={loading || hasPrescriptionMedicine}
+            disabled={loading || (hasPrescriptionMedicine && !attachedPrescription)}
             className="w-full"
             size="lg"
           >

@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import { NAV_LINKS, AUTH_NAV_LINKS, LANGUAGES } from "../../utils/constants";
 import { useAuth } from "../../hooks/useAuth";
@@ -51,6 +52,20 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-border">
+      {user?.role === "admin" && (
+        <div className="bg-slate-900 text-white text-xs px-4 py-2 flex items-center justify-between border-b border-slate-800">
+          <span className="flex items-center gap-2 font-medium">
+            <ShieldCheck className="w-4 h-4 text-primary-hover shrink-0" />
+            <span>Administrator Customer View — You are currently previewing the customer storefront.</span>
+          </span>
+          <NavLink
+            to="/admin"
+            className="font-bold text-xs bg-primary hover:bg-primary-hover text-white px-3 py-1 rounded-md transition-colors flex items-center gap-1 shrink-0"
+          >
+            Return to Admin Dashboard &rarr;
+          </NavLink>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-18 py-3 gap-4">
           {/* Logo */}
@@ -133,6 +148,19 @@ export default function Navbar() {
 
                 {userMenuOpen && (
                   <div className="absolute right-0 mt-2 w-52 py-1.5 card z-10">
+                    {user?.role === "admin" && (
+                      <NavLink
+                        to="/admin"
+                        onClick={() => setUserMenuOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-bold transition-colors
+                          ${isActive ? "text-primary-hover bg-primary-50" : "text-primary-hover hover:bg-primary-50"}`
+                        }
+                      >
+                        <ShieldCheck className="w-4 h-4 text-primary-hover" />
+                        Admin Dashboard
+                      </NavLink>
+                    )}
                     <NavLink
                       to="/profile"
                       onClick={() => setUserMenuOpen(false)}

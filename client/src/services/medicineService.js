@@ -3,7 +3,7 @@ import api from "./api";
 export const medicineService = {
   /**
    * Search and filter medicines with pagination
-   * @param {Object|string} params Query string or params object { q, search, page, limit, category, filter, sort, manufacturer }
+   * @param {Object|string} params Query string or params object { q, search, page, limit, category, filter, sort, manufacturer, lang }
    */
   async search(params) {
     const queryParams = typeof params === "string" ? { q: params } : params;
@@ -24,9 +24,10 @@ export const medicineService = {
   /**
    * Get medicine by ID or slug
    * @param {string} id
+   * @param {string} lang
    */
-  async getById(id) {
-    const response = await api.get(`/medicines/${id}`);
+  async getById(id, lang = "en") {
+    const response = await api.get(`/medicines/${id}`, { params: { lang } });
     const data = response.data || {};
     return {
       medicine: data.medicine || data,
@@ -37,9 +38,10 @@ export const medicineService = {
   /**
    * Get generic alternatives for a medicine
    * @param {string} id
+   * @param {string} lang
    */
-  async getAlternatives(id) {
-    const response = await api.get(`/medicines/${id}/alternatives`);
+  async getAlternatives(id, lang = "en") {
+    const response = await api.get(`/medicines/${id}/alternatives`, { params: { lang } });
     const data = response.data || {};
     return {
       alternatives: data.alternatives || [],
@@ -50,9 +52,10 @@ export const medicineService = {
   /**
    * Get popular medicines
    * @param {number} limit
+   * @param {string} lang
    */
-  async getPopular(limit = 4) {
-    const response = await api.get("/medicines/popular", { params: { limit } });
+  async getPopular(limit = 4, lang = "en") {
+    const response = await api.get("/medicines/popular", { params: { limit, lang } });
     const data = response.data || {};
     return {
       medicines: data.medicines || [],
@@ -76,9 +79,10 @@ export const medicineService = {
    * Compare two medicines
    * @param {string} idA
    * @param {string} idB
+   * @param {string} lang
    */
-  async compare(idA, idB) {
-    const response = await api.get("/medicines/compare", { params: { a: idA, b: idB } });
+  async compare(idA, idB, lang = "en") {
+    const response = await api.get("/medicines/compare", { params: { a: idA, b: idB, lang } });
     const data = response.data || {};
     return {
       medicines: data.medicines || [],

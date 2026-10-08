@@ -33,8 +33,12 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await login(form);
-      navigate("/");
+      const loggedUser = await login(form);
+      if (loggedUser && loggedUser.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
     } catch (err) {
       setError(
         err.response?.data?.message || t("auth.loginError")
