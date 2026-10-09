@@ -19,7 +19,6 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import { useLanguage } from "../../hooks/useLanguage";
 
 export const ADMIN_NAV_GROUPS = [
   {
@@ -64,7 +63,6 @@ export const ADMIN_NAV_GROUPS = [
 
 export default function AdminSidebar({ mobileOpen, setMobileOpen }) {
   const { logout } = useAuth();
-  const { t } = useLanguage();
   const location = useLocation();
 
   const handleLogout = () => {

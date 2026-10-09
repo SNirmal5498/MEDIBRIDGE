@@ -82,64 +82,54 @@ const LOCATION_MAPS = {
   },
   ml: {
     "Sri Shakthi Hostel": "ശ്രീ ശക്തി ഹോസ്റ്റൽ",
-    "Sri Shakthi Nagar": "ശ്രീ ശക്തി നഗർ",
-    "Race Course Road": "റേസ് കോഴ്സ് റോഡ്",
-    "Gandhipuram": "ഗാന്ധിപുരം",
-    "RS Puram": "ആർ. എസ്. പുരം",
-    "Peelamedu": "പീലമേട്",
-    "Saibaba Colony": "സായിബാബ കോളനി",
-    "Sitra": "സിട്ര",
-    "Trichy Road": "തിരുച്ചി റോഡ്",
-    "Mettupalayam Road": "മേട്ടുപ്പാളയം റോഡ്",
-    "Avinashi Road": "അവിനാശി റോഡ്",
-    "Coimbatore": "കോയമ്പത്തൂർ",
-    "Tamil Nadu": "തമിഴ്‌നാട്",
-    "TamilNadu": "തമിഴ്‌നാട്",
-    "TN": "തമിഴ്‌നാട്",
-    "India": "ഇന്ത്യ",
-    "Near": "അടുത്ത്",
-    "Road": "റോഡ്",
-    "Street": "തെരുവ്",
-    "Nagar": "നഗർ",
-  },
-  kn: {
-    "Sri Shakthi Hostel": "ಶ್ರೀ ಶಕ್ತಿ ಹಾಸ್ಟೆಲ್",
-    "Sri Shakthi Nagar": "ಶ್ರೀ ಶಕ್ತಿ ನಗರ",
-    "Race Course Road": "ರೇಸ್ ಕೋರ್ಸ್ ರಸ್ತೆ",
-    "Gandhipuram": "ಗಾಂಧಿಪುರಂ",
-    "RS Puram": "ಆರ್. ಎಸ್. ಪುರಂ",
-    "Peelamedu": "ಪೀಲಮೇಡು",
-    "Saibaba Colony": "ಸಾಯಿಬಾಬಾ ಕಾಲೋನಿ",
-    "Sitra": "ಸಿಟ್ರಾ",
-    "Trichy Road": "ತಿರುಚಿ ರಸ್ತೆ",
-    "Mettupalayam Road": "ಮೆಟ್ಟುಪಾಳಯಂ ರಸ್ತೆ",
-    "Avinashi Road": "ಅವಿನಾಶಿ ರಸ್ತೆ",
-    "Coimbatore": "ಕೊಯಮತ್ತೂರು",
-    "Tamil Nadu": "ತಮಿಳುನಾಡು",
-    "TamilNadu": "ತಮಿಳುನಾಡು",
-    "TN": "ತಮಿಳುನಾಡು",
-    "India": "ಭಾರತ",
-    "Near": "ಹತ್ತಿರ",
-    "Road": "ರಸ್ತೆ",
-    "Street": "ಬೀದಿ",
-    "Nagar": "ನಗರ",
-  },
-};
-
-const MEDICINE_BRAND_MAPS = {
+    "Sri Shakthi Nagar": "ശ്രീ ശക്const MEDICINE_BRAND_MAPS = {
   ta: {
+    "Electral Powder": "எலக்ட்ரால் பவுடர்",
+    "Electral Orange": "எலக்ட்ரால் ஆரஞ்சு",
+    "Electral": "எலக்ட்ரால்",
+    "Eno Fruit Salt Lemon": "ஈனோ ஃப்ரூட் சால்ட் எலுமிச்சை",
+    "Eno Fruit Salt Regular": "ஈனோ ஃப்ரூட் சால்ட் ரெகுலர்",
+    "Eno Fruit Salt Orange": "ஈனோ ஃப்ரூட் சால்ட் ஆரஞ்சு",
+    "Eno Fruit Salt": "ஈனோ ஃப்ரூட் சால்ட்",
+    "Eno": "ஈனோ",
+    "Evion 400": "ஈவியான் 400",
+    "Evion": "ஈவியான்",
+    "Foracort 200 Inhaler": "ஃபோராகோர்ட் 200 இன்ஹேலர்",
+    "Foracort": "ஃபோராகோர்ட்",
+    "Glycomet-SR 500": "கிளைகோமெட்-எஸ்ஆர் 500",
+    "Glycomet 500": "கிளைகோமெட் 500",
+    "Glycomet": "கிளைகோமெட்",
+    "Moov Pain Relief Cream": "மூவ் வலி நிவாரண கிரீம்",
+    "Moov Spray": "மூவ் ஸ்ப்ரே",
+    "Moov": "மூவ்",
+    "Neurobion Forte": "நியூரோபியான் ஃபோர்ட்டே",
+    "Neurobion": "நியூரோபியான்",
+    "Pfizer": "ஃபைசர்",
+    "Zerodol-P": "ஜீரோடால்-பி",
+    "Brufen": "ப்ரூஃபென்",
+    "Voveran": "வோவெரான்",
+    "Disprin": "டிஸ்ப்ரின்",
+    "Combiflam": "காம் பிஃபிளாம்",
+    "Supradyn": "சுப்ராடின்",
+    "Liv.52": "லிவ்.52",
+    "Shelcal": "ஷெல்கால்",
+    "Pantocid": "பான்டோசிட்",
+    "Pan-40": "பான்-40",
+    "Azithral": "அசித்ரால்",
+    "Betadine 5% Ointment": "பீட்டாடின் 5% களிம்பு",
+    "Betadine": "பீட்டாடின்",
+    "Becosules Z": "பெகோசுல்ஸ் இசட்",
+    "Becosules Capsules": "பெகோசுல்ஸ் கேப்சூல்கள்",
+    "Becosules": "பெகோசுல்ஸ்",
     "Crocin": "க்ரோசின்",
     "Dolo": "டோலோ",
     "Calpol": "கால்போல்",
     "Cetrizine-D": "செட்ரிசின்-டி",
     "Cetirizine": "செட்டிரிசின்",
-    "Electral": "எலக்ட்ரால்",
     "Limcee": "லிம்சி",
     "Digene": "டைஜீன்",
     "Gelusil": "கெலுசில்",
     "Novamox": "நோவாமாக்ஸ்",
-    "Glycomet": "கிளைகோமெட்",
-    "Betadine": "பீட்டாடின்",
     "Allegra": "அலிகிரா",
     "Asthalin Inhaler": "ஆஸ்தாலின் இன்ஹேலர்",
     "Asthalin": "ஆஸ்தாலின்",
@@ -152,16 +142,174 @@ const MEDICINE_BRAND_MAPS = {
     "Johnson & Johnson": "ஜான்சன் & ஜான்சன்",
   },
   hi: {
+    "Electral Powder": "इलेक्ट्रा-एल पाउडर",
+    "Electral Orange": "इलेक्ट्रा-एल ऑरेंज",
+    "Electral": "इलेक्ट्रा-एल",
+    "Eno Fruit Salt Lemon": "ईनो फ्रूट साल्ट लेमन",
+    "Eno Fruit Salt Regular": "ईनो फ्रूट साल्ट रेगुलर",
+    "Eno Fruit Salt Orange": "ईनो फ्रूट साल्ट ऑरेंज",
+    "Eno Fruit Salt": "ईनो फ्रूट साल्ट",
+    "Eno": "ईनो",
+    "Evion 400": "इवियन 400",
+    "Evion": "इवियन",
+    "Foracort 200 Inhaler": "फोराकोर्ट 200 इनहेलर",
+    "Foracort": "फोराकोर्ट",
+    "Glycomet-SR 500": "ग्लाइकोमेट-एसआर 500",
+    "Glycomet 500": "ग्लाइकोमेट 500",
+    "Glycomet": "ग्लाइकोमेट",
+    "Moov Pain Relief Cream": "मूव पेन रिलीफ क्रीम",
+    "Moov Spray": "मूव स्प्रे",
+    "Moov": "मूव",
+    "Neurobion Forte": "न्यूरोबियन फोर्ट",
+    "Neurobion": "न्यूरोबियन",
     "Crocin": "क्रोसिन",
     "Dolo": "डोलो",
     "Calpol": "काल्पोल",
     "Cetrizine-D": "सेट्रिज़ाइन-डी",
     "Cetirizine": "सेटीरिज़िन",
-    "Electral": "इलेक्ट्रा-एल",
     "Limcee": "लिम्सी",
     "Digene": "डाइजीन",
     "Gelusil": "जेलुसिल",
     "Novamox": "नोवामॉक्स",
+    "Betadine": "बीटाडीन",
+    "Allegra": "एलेग्रा",
+    "Asthalin Inhaler": "एस्थालिन इनहेलर",
+    "Asthalin": "एस्थालिन",
+    "Augmentin 625 Duo": "ऑगमेंटिन 625 डुओ",
+    "Augmentin": "ऑगमेंटिन",
+    "Band-Aid Washproof Strips": "बैंड-एड वॉशप्रूफ पट्टियां",
+    "Dettol Antiseptic Liquid": "डेटॉल एंटीसेप्टिक तरल",
+    "Soframycin Skin Cream": "सोफ्रामिसिन स्किन क्रीम",
+    "Povidone Iodine Antiseptic": "पोविडोन आयोडीन एंटीसेप्टिक",
+    "Johnson & Johnson": "जॉनसन एंड जॉनसन",
+  },
+  te: {
+    "Electral Powder": "ఎలక్ట్రాల్ పౌడర్",
+    "Electral Orange": "ఎలక్ట్రాల్ ఆరంజ్",
+    "Electral": "ఎలక్ట్రాల్",
+    "Eno Fruit Salt Lemon": "ఈనో ఫ్రూట్ సాల్ట్ నిమ్మ",
+    "Eno Fruit Salt Regular": "ఈనో ఫ్రూట్ సాల్ట్ రెగ్యులర్",
+    "Eno Fruit Salt Orange": "ఈనో ఫ్రూట్ సాల్ట్ ఆరంజ్",
+    "Eno Fruit Salt": "ఈనో ఫ్రూట్ సాల్ట్",
+    "Eno": "ఈనో",
+    "Evion 400": "ఇవియాన్ 400",
+    "Evion": "ఇవియాన్",
+    "Foracort 200 Inhaler": "ఫోరాకోర్ట్ 200 ఇన్హేలర్",
+    "Foracort": "ఫోరాకోర్ట్",
+    "Glycomet-SR 500": "గ్లైకోమెట్-ఎస్ఆర్ 500",
+    "Glycomet 500": "గ్లైకోమెట్ 500",
+    "Glycomet": "గ్లైకోమెట్",
+    "Moov Pain Relief Cream": "మూవ్ పెయిన్ రిలీఫ్ క్రీమ్",
+    "Moov Spray": "మూవ్ స్ప్రే",
+    "Moov": "మూవ్",
+    "Neurobion Forte": "న్యూరోబియాన్ ఫోర్టే",
+    "Neurobion": "న్యూరోబియాన్",
+    "Crocin": "క్రోసిన్",
+    "Dolo": "డోలో",
+    "Calpol": "కాల్పోల్",
+    "Cetrizine-D": "సెట్రిజైన్-డి",
+    "Cetirizine": "సెటిరిజైన్",
+    "Limcee": "లిమ్సీ",
+    "Digene": "డైజీన్",
+    "Gelusil": "జెలుసిల్",
+    "Novamox": "నోవామాక్స్",
+    "Betadine": "బీటాడిన్",
+    "Allegra": "అలెలెగ్రా",
+    "Asthalin Inhaler": "ఆస్థాలిన్ ఇన్హేలర్",
+    "Asthalin": "ఆస్థాలిన్",
+    "Augmentin 625 Duo": "ఆగ్మెంటిన్ 625 డుయో",
+    "Augmentin": "ఆగ్మెంటిన్",
+    "Band-Aid Washproof Strips": "బాండ్-ఎయిడ్ వాటర్‌ప్రూఫ్ పట్టీలు",
+    "Dettol Antiseptic Liquid": "డెట్టాల్ యాంటీసెప్టిక్ ద్రవం",
+    "Soframycin Skin Cream": "సోఫ్రామైసిన్ స్కిన్ క్రీమ్",
+    "Povidone Iodine Antiseptic": "పోవిడోన్ అయోడిన్ యాంటీసెప్టిక్",
+    "Johnson & Johnson": "జాన్సన్ & జాన్సన్",
+  },
+  ml: {
+    "Electral Powder": "ഇലക്ട്രാൽ പൗഡർ",
+    "Electral Orange": "ഇലക്ട്രാൽ ഓറഞ്ച്",
+    "Electral": "ഇലക്ട്രാൽ",
+    "Eno Fruit Salt Lemon": "ഈനോ ഫ്രൂട്ട് സാൾട്ട് ലമൺ",
+    "Eno Fruit Salt Regular": "ഈനോ ഫ്രൂട്ട് സാൾട്ട് റെഗുലർ",
+    "Eno Fruit Salt Orange": "ഈനോ ഫ്രൂട്ട് സാൾട്ട് ഓറഞ്ച്",
+    "Eno Fruit Salt": "ഈനോ ഫ്രൂട്ട് സാൾട്ട്",
+    "Eno": "ഈനോ",
+    "Evion 400": "ഇവിയോൺ 400",
+    "Evion": "ഇവിയോൺ",
+    "Foracort 200 Inhaler": "ഫോറാകോർട്ട് 200 ഇൻഹേലർ",
+    "Foracort": "ഫോറാകോർട്ട്",
+    "Glycomet-SR 500": "ഗ്ലൈക്കോമെറ്റ്-എസ്ആർ 500",
+    "Glycomet 500": "ഗ്ലൈക്കോമെറ്റ് 500",
+    "Glycomet": "ഗ്ലൈക്കോമെറ്റ്",
+    "Moov Pain Relief Cream": "മൂവ് പെയ്ൻ റിലീഫ് ക്രീം",
+    "Moov Spray": "മൂവ് സ്പ്രേ",
+    "Moov": "മൂവ്",
+    "Neurobion Forte": "ന്യൂറോബിയോൺ ഫോർട്ട്",
+    "Neurobion": "ന്യൂറോബിയോൺ",
+    "Crocin": "ക്രോസിൻ",
+    "Dolo": "ഡോളോ",
+    "Calpol": "കാൽപോൾ",
+    "Cetrizine-D": "സെട്രിസിൻ-ഡി",
+    "Cetirizine": "സെറ്റിറിസിൻ",
+    "Limcee": "ലിംസി",
+    "Digene": "ഡൈജീൻ",
+    "Gelusil": "ജെലുസിൽ",
+    "Novamox": "നോവാമോക്സ്",
+    "Betadine": "ബീറ്റാഡിൻ",
+    "Allegra": "അലെഗ്ര",
+    "Asthalin Inhaler": "ആസ്താലിൻ ഇൻഹേലർ",
+    "Asthalin": "ആസ്താലിൻ",
+    "Augmentin 625 Duo": "ഓഗ്മെന്റിൻ 625 ഡ്യുവോ",
+    "Augmentin": "ഓഗ്മെന്റിൻ",
+    "Band-Aid Washproof Strips": "ബാൻഡ്-എയ്ഡ് വാട്ടർപ്രൂഫ് സ്ട്രിപ്പുകൾ",
+    "Dettol Antiseptic Liquid": "ഡെറ്റോൾ ആന്റിസെപ്റ്റിക് ദ്രാവകം",
+    "Soframycin Skin Cream": "സോഫ്രാമൈസിൻ സ്കിൻ ക്രീം",
+    "Povidone Iodine Antiseptic": "പോവിഡോൺ അയഡിൻ ആന്റിസെപ്റ്റിക്",
+    "Johnson & Johnson": "ജോൺസൺ & ജോൺസൺ",
+  },
+  kn: {
+    "Electral Powder": "ಎಲೆಕ್ಟ್ರಾಲ್ ಪೌಡರ್",
+    "Electral Orange": "ಎಲೆಕ್ಟ್ರಾಲ್ ಆರೆಂಜ್",
+    "Electral": "ಎಲೆಕ್ಟ್ರಾಲ್",
+    "Eno Fruit Salt Lemon": "ಈನೋ ಫ್ರೂಟ್ ಸಾಲ್ಟ್ ಲೆಮನ್",
+    "Eno Fruit Salt Regular": "ಈನೋ ಫ್ರೂಟ್ ಸಾಲ್ಟ್ ರೆಗ್ಯುಲರ್",
+    "Eno Fruit Salt Orange": "ಈನೋ ಫ್ರೂಟ್ ಸಾಲ್ಟ್ ಆರೆಂಜ್",
+    "Eno Fruit Salt": "ಈನೋ ಫ್ರೂಟ್ ಸಾಲ್ಟ್",
+    "Eno": "ಈನೋ",
+    "Evion 400": "ಇವಿಯಾನ್ 400",
+    "Evion": "ಇವಿಯಾನ್",
+    "Foracort 200 Inhaler": "ಫೊರಾಕಾರ್ಟ್ 200 ಇನ್‌ಹೇಲರ್",
+    "Foracort": "ಫೊರಾಕಾರ್ಟ್",
+    "Glycomet-SR 500": "ಗ್ಲೈಕೋಮೆಟ್-ಎಸ್ಆರ್ 500",
+    "Glycomet 500": "ಗ್ಲೈಕೋಮೆಟ್ 500",
+    "Glycomet": "ಗ್ಲೈಕೋಮೆಟ್",
+    "Moov Pain Relief Cream": "ಮೂವ್ ಪೇನ್ ರಿಲೀಫ್ ಕ್ರೀಮ್",
+    "Moov Spray": "ಮೂವ್ ಸ್ಪ್ರೇ",
+    "Moov": "ಮೂವ್",
+    "Neurobion Forte": "ನ್ಯೂರೋಬಿಯಾನ್ ಫೋರ್ಟೆ",
+    "Neurobion": "ನ್ಯೂರೋಬಿಯಾನ್",
+    "Crocin": "ಕ್ರೋಸಿನ್",
+    "Dolo": "ಡೋಲೋ",
+    "Calpol": "ಕಾಲ್ಪೋಲ್",
+    "Cetrizine-D": "ಸೆಟ್ರಿಜಿನ್-ಡಿ",
+    "Cetirizine": "ಸೆಟಿರಿಜಿನ್",
+    "Limcee": "ಲಿಮ್ಸಿ",
+    "Digene": "ಡೈಜೀನ್",
+    "Gelusil": "ಗೆಲುಸಿಲ್",
+    "Novamox": "ನೋವಾಮಾಕ್ಸ್",
+    "Betadine": "ಬೀಟಾಡಿನ್",
+    "Allegra": "ಅಲೆಗ್ರಾ",
+    "Asthalin Inhaler": "ಆಸ್ಥಾಲಿನ್ ಇನ್‌ಹೇಲರ್",
+    "Asthalin": "ಆಸ್ಥಾಲಿನ್",
+    "Augmentin 625 Duo": "ಆಗ್‌ಮೆಂಟಿನ್ 625 ಡ್ಯುಯೊ",
+    "Augmentin": "ಆಗ್‌ಮೆಂಟಿನ್",
+    "Band-Aid Washproof Strips": "ಬ್ಯಾಂಡ್-ಏಡ್ ವಾಟರ್‌ಪ್ರೂಫ್ ಪಟ್ಟಿಗಳು",
+    "Dettol Antiseptic Liquid": "ಡೆಟಾಲ್ ಆಂಟಿಸೆಪ್ಟಿಕ್ ದ್ರವ",
+    "Soframycin Skin Cream": "ಸೋಫ್ರಾಮೈಸಿನ್ ಸ್ಕಿನ್ ಕ್ರೀಮ್",
+    "Povidone Iodine Antiseptic": "ಪೋವಿಡೋನ್ ಅಯೋಡಿನ್ ಆಂಟಿಸೆಪ್ಟಿಕ್",
+    "Johnson & Johnson": "ಜಾನ್ಸನ್ & ಜಾನ್ಸನ್",
+  },
+};नोवामॉक्स",
     "Glycomet": "ग्लाइकोमेट",
     "Betadine": "बीटाडीन",
     "Allegra": "एलेग्रा",
@@ -251,17 +399,41 @@ const MEDICINE_BRAND_MAPS = {
 
 const GENERIC_NAME_MAPS = {
   ta: {
+    "Oral Rehydration Salts (WHO Formula)": "வாய்வழி நீரேற்ற உப்புகள் (WHO ஃபார்முலா)",
+    "Oral Rehydration Salts": "வாய்வழி நீரேற்ற உப்புகள்",
+    "ORS (Oral Rehydration Salts)": "ஓ.ஆர்.எஸ் (வாய்வழி நீரேற்ற உப்புகள்)",
+    "Magaldrate + Simethicone": "மகால்ட்ரேட் + சிமெதிகோன்",
+    "Sorbitol + Acid Citric": "சார்பிட்டால் + சிட்ரிக் அமிலம்",
+    "Anhydrous Citric Acid + Sodium Bicarbonate + Sodium Carbonate": "அன்ஹைட்ரஸ் சிட்ரிக் அமிலம் + சோடியம் பைகார்பனேட் + சோடியம் கார்பனேட்",
+    "Vitamin E (Tocopheryl Acetate)": "வைட்டமின் ஈ (டோகோஃபெரைல் அசிடேட்)",
+    "Tocopheryl Acetate 400mg": "டோகோஃபெரைல் அசிடேட் 400 மி.கி.",
+    "Tocopheryl Acetate": "டோகோஃபெரைல் அசிடேட்",
+    "Formoterol + Budesonide": "ஃபார்மோட்டரால் + புடசோனைட்",
+    "Formoterol Fumarate + Budesonide": "ஃபார்மோட்டரால் ஃபியூமரேட் + புடசோனைட்",
+    "Metformin Hydrochloride": "மெட்ஃபோர்மின் ஹைட்ரோகுளோரைடு",
+    "Metformin (Sustained Release)": "மெட்ஃபோர்மின் (நீடித்த வெளியீடு)",
+    "Metformin": "மெட்ஃபோர்மின்",
+    "Turpentine Oil + Nilgiri Oil + Wintergreen Oil": "டாப்படைன் எண்ணெய் + நீலகிரி எண்ணெய் + வின்டர்கிரீன் எண்ணெய்",
+    "Ayurvedic Pain Relief Formula": "ஆயுர்வேத வலி நிவாரண ஃபார்முலா",
+    "Vitamin B-Complex + Cyanocobalamin": "வைட்டமின் பி-காம்பளக்ஸ் + சயனோகோபாலமின்",
+    "Vitamin B-Complex + Zinc": "வைட்டமின் பி-காம்பளக்ஸ் + துத்தநாகம்",
+    "Vitamin B-Complex with Vitamin C & Zinc": "வைட்டமின் பி-காம்பளக்ஸ், வைட்டமின் சி & துத்தநாகம்",
+    "Vitamin B1 + B6 + B12": "வைட்டமின் பி1 + பி6 + பி12",
+    "Diclofenac Sodium": "டைக்ளோஃபெனாக் சோடியம்",
+    "Aceclofenac + Paracetamol": "அசெக்லோஃபெனாக் + பாராசிட்டமால்",
+    "Ibuprofen + Paracetamol": "ஐபூப்ரோஃபென் + பாராசிட்டமால்",
+    "Calcium + Vitamin D3": "கால்சியம் + வைட்டமின் டி3",
+    "Pantoprazole": "பான்டோபிரசோல்",
+    "Azithromycin": "அசித்ரோமைசின்",
+    "Povidone Iodine": "பொவிடோன் அயோடின்",
+    "Povidone-Iodine": "பொவிடோன்-அயோடின்",
     "Paracetamol": "பாராசிட்டமால்",
     "Cetirizine": "செட்டிரிசின்",
-    "ORS (Oral Rehydration Salts)": "ஓ.ஆர்.எஸ் (வாய்வழி நீரேற்ற உப்புகள்)",
-    "Oral Rehydration Salts": "வாய்வழி நீரேற்ற உப்புகள்",
     "Vitamin C (Ascorbic Acid)": "வைட்டமின் சி (அஸ்கார்பிக் அமிலம்)",
     "Ascorbic Acid": "அஸ்கார்பிக் அமிலம்",
     "Antacid (Magaldrate + Simethicone)": "அமிலநீக்கி (மகால்ட்ரேட் + சிமெதிகோன்)",
     "Antacid (Aluminium + Magnesium Hydroxide)": "அமிலநீக்கி (அலுமினியம் + மெக்னீசியம் ஹைட்ராக்சைடு)",
     "Amoxicillin": "அமோக்சிசிலின்",
-    "Metformin": "மெட்ஃபோர்மின்",
-    "Povidone Iodine": "பொவிடோன் அயோடின்",
     "Fexofenadine": "ஃபெக்ஸோஃபெனாடின்",
     "Salbutamol": "சல்பியூட்டமால்",
     "Amoxicillin + Clavulanic Acid": "அமோக்சிசிலின் + கிளாவூலனிக் அமிலம்",
@@ -334,6 +506,14 @@ const GENERIC_NAME_MAPS = {
 
 const MANUFACTURER_MAPS = {
   ta: {
+    "Mankind": "மேன்கைண்ட்",
+    "Torrent": "டொரண்ட்",
+    "Alkem": "ஆல்கெம்",
+    "Sun Pharma": "சன் பார்மா",
+    "Dr. Reddy's": "டாக்டர் ரெட்டீஸ்",
+    "Lupin": "லூபின்",
+    "Win-Medicare": "வின்-மெடிகேர்",
+    "Pfizer": "ஃபைசர்",
     "GSK": "ஜி.எஸ்.கே",
     "Micro Labs": "மைக்ரோ லேப்ஸ்",
     "Cipla": "சிப்லா",
@@ -505,6 +685,110 @@ const STRENGTH_MAPS = {
     "5% w/w": "5% w/w",
   },
 };
+
+const DOSAGE_FORM_MAPS = {
+  ta: {
+    "Tablet": "மாத்திரை",
+    "Tablets": "மாத்திரைகள்",
+    "Capsule": "காப்ஸ்யூல்",
+    "Capsules": "காப்ஸ்யூல்கள்",
+    "Ointment": "களிம்பு / ஆயின்ட்மென்ட்",
+    "Syrup": "சிரப்",
+    "Gel": "ஜெல்",
+    "Cream": "கிரீம்",
+    "Inhaler": "இன்ஹேலர்",
+    "Sachet": "சாச்செட்",
+    "Sachets": "சாச்செட்டுகள்",
+    "Liquid": "திரவம்",
+    "Injection": "ஊசி",
+    "Drops": "சொட்டு மருந்து",
+    "Spray": "ஸ்ப்ரே",
+    "Lotion": "லோஷன்",
+    "Suspension": "சஸ்பென்ஷன்",
+    "Solution": "கரைசல்",
+  },
+  hi: {
+    "Tablet": "टैबलेट",
+    "Tablets": "टैबलेट्स",
+    "Capsule": "कैप्सूल",
+    "Capsules": "कैप्सूल",
+    "Ointment": "ऑइंटमेंट / मलम",
+    "Syrup": "सिरप",
+    "Gel": "जेल",
+    "Cream": "क्रीम",
+    "Inhaler": "इनहेलर",
+    "Sachet": "पाउच",
+    "Sachets": "पाउच",
+    "Liquid": "तरल",
+    "Injection": "इंजेक्शन",
+    "Drops": "ड्रॉप्स",
+    "Spray": "स्प्रे",
+    "Lotion": "लोशन",
+    "Suspension": "सस्पेंशन",
+    "Solution": "घोल",
+  },
+  te: {
+    "Tablet": "టాబ్లెట్",
+    "Tablets": "టాబ్లెట్లు",
+    "Capsule": "క్యాప్సూల్",
+    "Capsules": "క్యాప్సూల్స్",
+    "Ointment": "లేపనం",
+    "Syrup": "సిరప్",
+    "Gel": "జెల్",
+    "Cream": "క్రీమ్",
+    "Inhaler": "ఇన్హేలర్",
+    "Sachet": "సాచెట్",
+    "Sachets": "సాచెట్లు",
+    "Liquid": "ద్రవం",
+    "Injection": "ఇంజెక్షన్",
+    "Drops": "చుక్కలు",
+    "Spray": "స్ప్రే",
+    "Lotion": "లోషన్",
+    "Suspension": "సస్పెన్షన్",
+    "Solution": "ద్రావణం",
+  },
+  ml: {
+    "Tablet": "ഗുളിക",
+    "Tablets": "ഗുളികകൾ",
+    "Capsule": "കാപ്സ്യൂൾ",
+    "Capsules": "കാപ്സ്യൂളുകൾ",
+    "Ointment": "കുഴമ്പ് / ഓയിന്റ്മെന്റ്",
+    "Syrup": "സിറപ്പ്",
+    "Gel": "ജെൽ",
+    "Cream": "ക്രീം",
+    "Inhaler": "ഇൻഹേലർ",
+    "Sachet": "സാച്ചെറ്റ്",
+    "Sachets": "സാച്ചെറ്റുകൾ",
+    "Liquid": "ദ്രാവകം",
+    "Injection": "ഇഞ്ചക്ഷൻ",
+    "Drops": "തുള്ളി മരുന്ന്",
+    "Spray": "സ്പ്രേ",
+    "Lotion": "ലോഷൻ",
+    "Suspension": "സസ്പെൻഷൻ",
+    "Solution": "ലായനി",
+  },
+  kn: {
+    "Tablet": "ಮಾತ್ರೆ",
+    "Tablets": "ಮಾತ್ರೆಗಳು",
+    "Capsule": "ಕ್ಯಾಪ್ಸುಲ್",
+    "Capsules": "ಕ್ಯಾಪ್ಸುಲ್ಗಳು",
+    "Ointment": "ಮುಲಾಮು",
+    "Syrup": "ಸಿರಪ್",
+    "Gel": "ಜೆಲ್",
+    "Cream": "ಕ್ರೀಮ್",
+    "Inhaler": "ಇನ್‌ಹೇಲರ್",
+    "Sachet": "ಸ್ಯಾಚೆಟ್",
+    "Sachets": "ಸ್ಯಾಚೆಟ್‌ಗಳು",
+    "Liquid": "ದ್ರವ",
+    "Injection": "ಇಂಜೆಕ್ಷನ್",
+    "Drops": "ಹನಿಗಳು",
+    "Spray": "ಸ್ಪ್ರೇ",
+    "Lotion": "ಲೋಷನ್",
+    "Suspension": "ಸಸ್ಪೆನ್ಷನ್",
+    "Solution": "ದ್ರಾವಣ",
+  },
+};
+
 
 const SENTENCE_MAPS = {
   "ta": {
@@ -1526,22 +1810,64 @@ export function formatHospitalName(name, t) {
 export function formatBrandName(brandName, langCode = "en") {
   if (!brandName || langCode === "en") return brandName || "";
   const map = MEDICINE_BRAND_MAPS[langCode];
-  if (map && map[brandName]) return map[brandName];
-  return brandName;
+  if (!map) return brandName;
+  if (map[brandName]) return map[brandName];
+
+  const lowerBrand = String(brandName).toLowerCase();
+  const exactKey = Object.keys(map).find((k) => k.toLowerCase() === lowerBrand);
+  if (exactKey) return map[exactKey];
+
+  let result = String(brandName);
+  const sortedKeys = Object.keys(map).sort((a, b) => b.length - a.length);
+  for (const key of sortedKeys) {
+    if (result.toLowerCase().includes(key.toLowerCase())) {
+      const regex = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+      result = result.replace(regex, map[key]);
+    }
+  }
+  return result;
 }
 
 export function formatGenericName(genericName, langCode = "en") {
   if (!genericName || langCode === "en") return genericName || "";
   const map = GENERIC_NAME_MAPS[langCode];
-  if (map && map[genericName]) return map[genericName];
-  return genericName;
+  if (!map) return genericName;
+  if (map[genericName]) return map[genericName];
+
+  const lowerGen = String(genericName).toLowerCase();
+  const exactKey = Object.keys(map).find((k) => k.toLowerCase() === lowerGen);
+  if (exactKey) return map[exactKey];
+
+  let result = String(genericName);
+  const sortedKeys = Object.keys(map).sort((a, b) => b.length - a.length);
+  for (const key of sortedKeys) {
+    if (result.toLowerCase().includes(key.toLowerCase())) {
+      const regex = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+      result = result.replace(regex, map[key]);
+    }
+  }
+  return result;
 }
 
 export function formatManufacturer(mfg, langCode = "en") {
   if (!mfg || langCode === "en") return mfg || "";
   const map = MANUFACTURER_MAPS[langCode];
-  if (map && map[mfg]) return map[mfg];
-  return mfg;
+  if (!map) return mfg;
+  if (map[mfg]) return map[mfg];
+
+  const lowerMfg = String(mfg).toLowerCase();
+  const exactKey = Object.keys(map).find((k) => k.toLowerCase() === lowerMfg);
+  if (exactKey) return map[exactKey];
+
+  let result = String(mfg);
+  const sortedKeys = Object.keys(map).sort((a, b) => b.length - a.length);
+  for (const key of sortedKeys) {
+    if (result.toLowerCase().includes(key.toLowerCase())) {
+      const regex = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+      result = result.replace(regex, map[key]);
+    }
+  }
+  return result;
 }
 
 export function formatStrength(strength, langCode = "en") {
@@ -1556,6 +1882,19 @@ export function formatPackSize(packSize, langCode = "en") {
   const map = PACK_SIZE_MAPS[langCode];
   if (map && map[packSize]) return map[packSize];
   return packSize;
+}
+
+export function formatDosageForm(form, langCode = "en") {
+  if (!form || langCode === "en") return form || "";
+  const map = DOSAGE_FORM_MAPS[langCode];
+  if (map && map[form]) return map[form];
+  if (map) {
+    const key = Object.keys(map).find(
+      (k) => k.toLowerCase() === String(form).trim().toLowerCase()
+    );
+    if (key) return map[key];
+  }
+  return form;
 }
 
 export function formatMedicineText(text, langCode = "en") {

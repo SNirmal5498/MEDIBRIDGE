@@ -209,6 +209,16 @@ async function translateMedicine(medicine, targetLang = "en") {
   if (!medicine || targetLang === "en") return medicine;
 
   const fieldsToTranslate = [
+    "name",
+    "brand",
+    "genericName",
+    "composition",
+    "activeIngredients",
+    "manufacturer",
+    "dosageForm",
+    "form",
+    "category",
+    "shortDescription",
     "description",
     "uses",
     "howItWorks",

@@ -86,35 +86,75 @@ const createOrder = async (req, res) => {
       }
     }
 
-    // Inventory Stock Safety Check & Stock Reduction
+    // Inventory Stock Atomic Reservation & Deduction
     const Inventory = require("../models/Inventory");
-    for (const item of items) {
-      const inv = await Inventory.findOne({ pharmacyId: pharmacy.id, medicineId: item.medicineId });
-      if (inv) {
-        if (inv.stock < item.quantity) {
-          return res.status(400).json({
-            success: false,
-            message: inv.stock === 0
-              ? `Item '${item.medicineName}' is currently Out of Stock`
-              : `Only ${inv.stock} units of '${item.medicineName}' are currently available.`,
-          });
-        }
-      }
-    }
+    const deductedItems = [];
 
-    // Deduct stock quantity in Inventory
     for (const item of items) {
-      const inv = await Inventory.findOne({ pharmacyId: pharmacy.id, medicineId: item.medicineId });
-      if (inv) {
-        inv.stock -= item.quantity;
-        if (inv.stock <= 0) {
-          inv.stock = 0;
-          inv.availability = "out";
-        } else if (inv.stock <= 5) {
-          inv.availability = "limited";
+      // Find current inventory document before change for audit history
+      const invBefore = await Inventory.findOne({ pharmacyId: pharmacy.id, medicineId: item.medicineId });
+      if (!invBefore || invBefore.stock < item.quantity) {
+        // Rollback any stock deducted so far in this transaction
+        for (const rolledItem of deductedItems) {
+          await Inventory.updateOne(
+            { pharmacyId: pharmacy.id, medicineId: rolledItem.medicineId },
+            { $inc: { stock: rolledItem.quantity } }
+          );
         }
-        await inv.save();
+        return res.status(400).json({
+          success: false,
+          message: !invBefore || invBefore.stock === 0
+            ? `Item '${item.medicineName}' is currently Out of Stock`
+            : `Only ${invBefore.stock} units of '${item.medicineName}' are currently available.`,
+        });
       }
+
+      // Perform atomic decrement
+      const updatedInv = await Inventory.findOneAndUpdate(
+        { pharmacyId: pharmacy.id, medicineId: item.medicineId, stock: { $gte: item.quantity } },
+        {
+          $inc: { stock: -item.quantity },
+          $set: {
+            lastVerifiedAt: new Date(),
+            verificationSource: "customer_order",
+          },
+          $push: {
+            adjustmentHistory: {
+              date: new Date(),
+              oldStock: invBefore.stock,
+              newStock: invBefore.stock - item.quantity,
+              change: -item.quantity,
+              reason: "Order Placement",
+              source: "customer_order",
+            },
+          },
+        },
+        { new: true }
+      );
+
+      if (!updatedInv) {
+        // Rollback previous deductions if race condition occurred
+        for (const rolledItem of deductedItems) {
+          await Inventory.updateOne(
+            { pharmacyId: pharmacy.id, medicineId: rolledItem.medicineId },
+            { $inc: { stock: rolledItem.quantity } }
+          );
+        }
+        return res.status(400).json({
+          success: false,
+          message: `Stock reservation conflict for '${item.medicineName}'. Please try again.`,
+        });
+      }
+
+      // Update availability enum based on remaining stock
+      const lowThreshold = updatedInv.lowStockThreshold || 10;
+      const newAvailability = updatedInv.stock === 0 ? "out" : updatedInv.stock <= lowThreshold ? "limited" : "in-stock";
+      if (updatedInv.availability !== newAvailability) {
+        updatedInv.availability = newAvailability;
+        await updatedInv.save();
+      }
+
+      deductedItems.push({ medicineId: item.medicineId, quantity: item.quantity });
     }
 
     // Calculate totals
@@ -157,6 +197,8 @@ const createOrder = async (req, res) => {
       totalAmount,
       estimatedDelivery,
       timeline,
+      stockDeducted: true,
+      stockRestored: false,
     });
 
     await order.save();
@@ -239,6 +281,37 @@ const updateOrderStatus = async (req, res) => {
         success: false,
         message: "Order not found",
       });
+    }
+
+    // Handle stock restoration upon order cancellation
+    if (status === "cancelled" && !order.stockRestored && order.pharmacy?.id) {
+      const Inventory = require("../models/Inventory");
+      for (const item of order.items) {
+        const invBefore = await Inventory.findOne({ pharmacyId: order.pharmacy.id, medicineId: item.medicineId });
+        const oldStock = invBefore ? invBefore.stock : 0;
+        const newStock = oldStock + item.quantity;
+        const lowThresh = invBefore?.lowStockThreshold || 10;
+        const newAvail = newStock === 0 ? "out" : newStock <= lowThresh ? "limited" : "in-stock";
+
+        await Inventory.updateOne(
+          { pharmacyId: order.pharmacy.id, medicineId: item.medicineId },
+          {
+            $inc: { stock: item.quantity },
+            $set: { availability: newAvail, lastVerifiedAt: new Date() },
+            $push: {
+              adjustmentHistory: {
+                date: new Date(),
+                oldStock,
+                newStock,
+                change: item.quantity,
+                reason: `Order Cancelled (${order.orderId})`,
+                source: "order_cancellation",
+              },
+            },
+          }
+        );
+      }
+      order.stockRestored = true;
     }
 
     order.status = status;

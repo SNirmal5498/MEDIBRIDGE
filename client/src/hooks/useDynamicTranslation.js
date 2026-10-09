@@ -17,13 +17,13 @@ export function useDynamicTranslation(content, type = "text", fields = []) {
   const targetLang = language?.code || "en";
 
   const [data, setData] = useState(content);
-  const [loading, setLoading] = useState(targetLang !== "en");
+  const [loading, setLoading] = useState(targetLang !== "en" && Boolean(content));
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
 
-    // English source language: immediate return without API overhead
+    // English source language or empty content: immediate return without API overhead
     if (!content || targetLang === "en") {
       setData(content);
       setLoading(false);
@@ -43,10 +43,16 @@ export function useDynamicTranslation(content, type = "text", fields = []) {
           result = await translateTexts(content, targetLang);
         } else if (type === "medicine") {
           result = await translateMedicine(content, targetLang);
+        } else if (type === "medicines" && Array.isArray(content)) {
+          result = await Promise.all(content.map((m) => translateMedicine(m, targetLang)));
         } else if (type === "pharmacy") {
           result = await translatePharmacy(content, targetLang);
+        } else if (type === "pharmacies" && Array.isArray(content)) {
+          result = await Promise.all(content.map((p) => translatePharmacy(p, targetLang)));
         } else if (type === "emergency") {
           result = await translateEmergencyCard(content, targetLang);
+        } else if (type === "emergencies" && Array.isArray(content)) {
+          result = await Promise.all(content.map((e) => translateEmergencyCard(e, targetLang)));
         } else if (type === "object" && typeof content === "object") {
           result = await translateObject(content, fields, targetLang);
         }
@@ -58,8 +64,8 @@ export function useDynamicTranslation(content, type = "text", fields = []) {
       } catch (err) {
         console.warn("useDynamicTranslation error:", err);
         if (isMounted) {
-          setData(content); // Fallback to original English content
-          setError(err.message);
+          setData(content); // Safe fallback to source content
+          setError(err.message || "Translation unavailable");
         }
       } finally {
         if (isMounted) {

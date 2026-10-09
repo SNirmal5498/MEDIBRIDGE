@@ -1,11 +1,12 @@
 const path = require("path");
 const serverDir = path.join(__dirname, "../server");
+require("dotenv").config({ path: path.join(serverDir, ".env") });
 const mongoose = require(path.join(serverDir, "node_modules/mongoose"));
 const bcrypt = require(path.join(serverDir, "node_modules/bcrypt"));
 const User = require(path.join(serverDir, "models/User"));
 
 async function seedAdmin() {
-  await mongoose.connect("mongodb://127.0.0.1:27017/medibridge");
+  await mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/medibridge");
 
   const adminEmail = "admin@medibridge.com";
   let admin = await User.findOne({ email: adminEmail });

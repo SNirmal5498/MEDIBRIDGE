@@ -1,5 +1,6 @@
 const path = require("path");
 const serverDir = path.join(__dirname, "../server");
+require(path.join(serverDir, "node_modules/dotenv")).config({ path: path.join(serverDir, ".env") });
 const mongoose = require(path.join(serverDir, "node_modules/mongoose"));
 const request = require(path.join(serverDir, "node_modules/supertest"));
 const app = require(path.join(serverDir, "app.js"));
@@ -12,7 +13,7 @@ const Order = require(path.join(serverDir, "models/Order"));
 const Prescription = require(path.join(serverDir, "models/Prescription"));
 
 async function runFullAdminTestSuite() {
-  await mongoose.connect("mongodb://127.0.0.1:27017/medibridge");
+  await mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/medibridge");
 
   console.log("==================================================");
   console.log("  MEDIBRIDGE COMPLETE ADMIN DASHBOARD TEST SUITE  ");
@@ -306,6 +307,16 @@ async function runFullAdminTestSuite() {
       .patch(`/api/admin/orders/${testOrderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "confirmed" });
+
+    await request(app)
+      .patch(`/api/admin/orders/${testOrderId}/status`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "packed" });
+
+    await request(app)
+      .patch(`/api/admin/orders/${testOrderId}/status`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "out-for-delivery" });
 
     const updateRes2 = await request(app)
       .patch(`/api/admin/orders/${testOrderId}/status`)

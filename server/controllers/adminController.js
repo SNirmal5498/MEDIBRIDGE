@@ -141,13 +141,31 @@ const deleteMedicine = async (req, res) => {
 const addPharmacy = async (req, res) => {
   try {
     const data = req.body;
-    if (!data.id) {
-      data.id = "pharm-" + Date.now().toString().slice(-6);
+    if (!data.name || !data.address || !data.phone) {
+      return res.status(400).json({ success: false, message: "Pharmacy name, address, and phone number are required." });
     }
+
+    // Duplicate check: check if pharmacy with same name exists (case-insensitive)
+    const existing = await Pharmacy.findOne({
+      name: { $regex: new RegExp(`^${data.name.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+    });
+
+    if (existing) {
+      return res.status(409).json({ success: false, message: "A pharmacy with this name already exists." });
+    }
+
+    if (!data.id) {
+      const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      data.id = `pharm-${slug}-${Date.now().toString().slice(-4)}`;
+    }
+
     const pharmacy = await Pharmacy.create(data);
-    res.status(201).json({ success: true, pharmacy });
+    res.status(201).json({ success: true, pharmacy, message: "Pharmacy added successfully." });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to create pharmacy" });
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: "A pharmacy with this ID or details already exists." });
+    }
+    res.status(500).json({ success: false, message: error.message || "Failed to create pharmacy" });
   }
 };
 
@@ -155,10 +173,28 @@ const addPharmacy = async (req, res) => {
 const updatePharmacy = async (req, res) => {
   try {
     const { id } = req.params;
-    const pharmacy = await Pharmacy.findOneAndUpdate({ id }, req.body, { new: true });
-    res.status(200).json({ success: true, pharmacy });
+    const data = req.body;
+
+    if (data.name) {
+      const existing = await Pharmacy.findOne({
+        id: { $ne: id },
+        name: { $regex: new RegExp(`^${data.name.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+      });
+      if (existing) {
+        return res.status(409).json({ success: false, message: "Another pharmacy with this name already exists." });
+      }
+    }
+
+    const pharmacy = await Pharmacy.findOneAndUpdate({ id }, data, { new: true, runValidators: true });
+    if (!pharmacy) {
+      return res.status(404).json({ success: false, message: "Pharmacy not found." });
+    }
+    res.status(200).json({ success: true, pharmacy, message: "Pharmacy updated successfully." });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to update pharmacy" });
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: "A pharmacy with this unique details already exists." });
+    }
+    res.status(500).json({ success: false, message: error.message || "Failed to update pharmacy" });
   }
 };
 
@@ -204,6 +240,36 @@ const updateOrderStatus = async (req, res) => {
         success: false,
         message: `Invalid order status transition from '${order.status}' to '${status}'`,
       });
+    }
+
+    // Restore stock if status becomes cancelled
+    if (status === "cancelled" && !order.stockRestored && order.pharmacy?.id) {
+      for (const item of order.items) {
+        const invBefore = await Inventory.findOne({ pharmacyId: order.pharmacy.id, medicineId: item.medicineId });
+        const oldStock = invBefore ? invBefore.stock : 0;
+        const newStock = oldStock + item.quantity;
+        const lowThresh = invBefore?.lowStockThreshold || 10;
+        const newAvail = newStock === 0 ? "out" : newStock <= lowThresh ? "limited" : "in-stock";
+
+        await Inventory.updateOne(
+          { pharmacyId: order.pharmacy.id, medicineId: item.medicineId },
+          {
+            $inc: { stock: item.quantity },
+            $set: { availability: newAvail, lastVerifiedAt: new Date() },
+            $push: {
+              adjustmentHistory: {
+                date: new Date(),
+                oldStock,
+                newStock,
+                change: item.quantity,
+                reason: `Admin Order Cancellation (${order.orderId})`,
+                source: "admin_cancellation",
+              },
+            },
+          }
+        );
+      }
+      order.stockRestored = true;
     }
 
     order.status = status;
@@ -311,27 +377,69 @@ const getInventory = async (req, res) => {
 // Admin Add/Update Inventory
 const updateInventory = async (req, res) => {
   try {
-    const { pharmacyId, medicineId, stock, price, availability, deliveryAvailable } = req.body;
+    const {
+      pharmacyId,
+      medicineId,
+      stock,
+      price,
+      availability,
+      deliveryAvailable,
+      stockType,
+      lowStockThreshold,
+      verificationSource,
+      reason,
+    } = req.body;
+
     if (!pharmacyId || !medicineId || stock === undefined || price === undefined) {
       return res.status(400).json({ success: false, message: "pharmacyId, medicineId, stock, and price are required" });
     }
 
-    const computedAvailability = stock === 0 ? "out" : stock <= 5 ? "limited" : "in-stock";
+    const numStock = Number(stock);
+    const numPrice = Number(price);
+    const numThreshold = lowStockThreshold !== undefined ? Number(lowStockThreshold) : 10;
+
+    if (isNaN(numStock) || numStock < 0) {
+      return res.status(400).json({ success: false, message: "Stock must be a non-negative number" });
+    }
+    if (isNaN(numPrice) || numPrice < 0) {
+      return res.status(400).json({ success: false, message: "Price must be a non-negative number" });
+    }
+
+    const computedAvailability = numStock === 0 ? "out" : numStock <= numThreshold ? "limited" : "in-stock";
+    const invBefore = await Inventory.findOne({ pharmacyId, medicineId });
+    const oldStock = invBefore ? invBefore.stock : 0;
+    const historyEntry = {
+      date: new Date(),
+      oldStock,
+      newStock: numStock,
+      change: numStock - oldStock,
+      reason: reason || (invBefore ? "Admin Inventory Update" : "Initial Stock Record Created"),
+      source: verificationSource || "admin_console",
+    };
+
+    const updateFields = {
+      stock: numStock,
+      price: numPrice,
+      availability: availability || computedAvailability,
+      deliveryAvailable: deliveryAvailable !== undefined ? Boolean(deliveryAvailable) : true,
+      stockType: stockType || (invBefore?.stockType || "verified"),
+      lowStockThreshold: numThreshold,
+      lastVerifiedAt: new Date(),
+      verificationSource: verificationSource || "admin_console",
+    };
 
     const inv = await Inventory.findOneAndUpdate(
       { pharmacyId, medicineId },
       {
-        stock,
-        price,
-        availability: availability || computedAvailability,
-        deliveryAvailable: deliveryAvailable !== undefined ? deliveryAvailable : true,
+        $set: updateFields,
+        $push: { adjustmentHistory: historyEntry },
       },
       { new: true, upsert: true }
     );
 
-    await logAuditAction(req, "UPDATE_INVENTORY", "INVENTORY", `${pharmacyId}_${medicineId}`, { stock, price });
+    await logAuditAction(req, "UPDATE_INVENTORY", "INVENTORY", `${pharmacyId}_${medicineId}`, { stock: numStock, price: numPrice });
 
-    res.status(200).json({ success: true, inventory: inv });
+    res.status(200).json({ success: true, inventory: inv, message: "Inventory record saved successfully." });
   } catch (error) {
     console.error("Error in updateInventory:", error);
     res.status(500).json({ success: false, message: "Failed to update inventory" });

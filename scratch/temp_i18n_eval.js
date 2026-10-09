@@ -1,4 +1,4 @@
-import { translations, translate } from "./translations.js";
+const translations = {}; const translate = () => {};
 
 export const CATEGORY_TRANSLATIONS = {
   "Pain Relief": {
@@ -276,3 +276,5 @@ export function getCategoryTranslation(langCode, category) {
 }
 
 export { translate };
+
+module.exports = { CATEGORY_TRANSLATIONS, getCategoryTranslation };

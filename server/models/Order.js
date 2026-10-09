@@ -173,6 +173,16 @@ const orderSchema = new mongoose.Schema(
         },
       },
     ],
+
+    stockDeducted: {
+      type: Boolean,
+      default: true,
+    },
+
+    stockRestored: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

@@ -32,6 +32,34 @@ const inventorySchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    stockType: {
+      type: String,
+      enum: ["verified", "manual", "sample", "stale"],
+      default: "verified",
+    },
+    lastVerifiedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    verificationSource: {
+      type: String,
+      default: "manual",
+    },
+    lowStockThreshold: {
+      type: Number,
+      default: 10,
+      min: 0,
+    },
+    adjustmentHistory: [
+      {
+        date: { type: Date, default: Date.now },
+        oldStock: Number,
+        newStock: Number,
+        change: Number,
+        reason: String,
+        source: String,
+      },
+    ],
   },
   {
     timestamps: true,

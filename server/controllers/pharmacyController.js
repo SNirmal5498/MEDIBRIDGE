@@ -126,12 +126,36 @@ async function ensureSeedInventory() {
   }
 }
 
+function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+  if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined) {
+    return null;
+  }
+  const nLat1 = Number(lat1);
+  const nLon1 = Number(lon1);
+  const nLat2 = Number(lat2);
+  const nLon2 = Number(lon2);
+  if (isNaN(nLat1) || isNaN(nLon1) || isNaN(nLat2) || isNaN(nLon2)) return null;
+
+  const R = 6371; // Radius of Earth in KM
+  const dLat = ((nLat2 - nLat1) * Math.PI) / 180;
+  const dLon = ((nLon2 - nLon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((nLat1 * Math.PI) / 180) *
+      Math.cos((nLat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const dist = R * c;
+  return Math.round(dist * 10) / 10;
+}
+
 const getPharmacies = async (req, res) => {
   try {
     await ensureSeedPharmacies();
     await ensureSeedInventory();
 
-    const { search, filter, sort } = req.query;
+    const { search, filter, sort, lat, lng } = req.query;
     const query = { isActive: true };
 
     if (search && search.trim()) {
@@ -142,11 +166,37 @@ const getPharmacies = async (req, res) => {
     if (filter === "open") query.isOpen = true;
     else if (filter === "delivery") query.deliveryAvailable = true;
 
-    let sortObj = { distanceKm: 1 };
-    if (sort === "rating") sortObj = { rating: -1, distanceKm: 1 };
-    else if (sort === "name") sortObj = { name: 1 };
+    let pharmacies = await Pharmacy.find(query).lean();
 
-    const pharmacies = await Pharmacy.find(query).sort(sortObj).lean();
+    // Compute dynamic distance if user lat/lng provided
+    const userLat = lat ? Number(lat) : null;
+    const userLng = lng ? Number(lng) : null;
+
+    pharmacies = pharmacies.map((pharm) => {
+      let distanceKm = pharm.distanceKm ?? 1.0;
+      let travelTimeDrive = pharm.travelTimeDrive || "5 mins";
+      let travelTimeWalk = pharm.travelTimeWalk || "15 mins";
+
+      if (userLat !== null && userLng !== null && pharm.latitude && pharm.longitude) {
+        const computedDist = calculateHaversineDistance(userLat, userLng, pharm.latitude, pharm.longitude);
+        if (computedDist !== null) {
+          distanceKm = computedDist;
+          travelTimeDrive = `${Math.max(2, Math.round(computedDist * 3))} min drive`;
+          travelTimeWalk = `${Math.max(5, Math.round(computedDist * 12))} min walk`;
+        }
+      }
+
+      return {
+        ...pharm,
+        distanceKm,
+        travelTimeDrive,
+        travelTimeWalk,
+      };
+    });
+
+    if (sort === "rating") pharmacies.sort((a, b) => b.rating - a.rating);
+    else if (sort === "name") pharmacies.sort((a, b) => a.name.localeCompare(b.name));
+    else pharmacies.sort((a, b) => a.distanceKm - b.distanceKm);
 
     res.status(200).json({
       success: true,
@@ -210,24 +260,69 @@ const getMedicineAvailability = async (req, res) => {
     await ensureSeedInventory();
 
     const { medicineId } = req.params;
+    const { lat, lng } = req.query;
+
+    const targetMedicine = await Medicine.findOne({ id: medicineId }).lean();
+    if (!targetMedicine) {
+      return res.status(404).json({ success: false, message: "Medicine not found in catalog" });
+    }
 
     const inventoryRecords = await Inventory.find({ medicineId, stock: { $gt: 0 } }).lean();
-
     const pharmacyIds = inventoryRecords.map((inv) => inv.pharmacyId);
     const pharmacies = await Pharmacy.find({ id: { $in: pharmacyIds }, isActive: true }).lean();
 
+    const userLat = lat ? Number(lat) : null;
+    const userLng = lng ? Number(lng) : null;
+
     const results = pharmacies.map((pharm) => {
       const inv = inventoryRecords.find((i) => i.pharmacyId === pharm.id);
+
+      let distanceKm = pharm.distanceKm ?? 1.0;
+      let travelTimeDrive = pharm.travelTimeDrive || "5 mins";
+      let travelTimeWalk = pharm.travelTimeWalk || "15 mins";
+
+      if (userLat !== null && userLng !== null && pharm.latitude && pharm.longitude) {
+        const computedDist = calculateHaversineDistance(userLat, userLng, pharm.latitude, pharm.longitude);
+        if (computedDist !== null) {
+          distanceKm = computedDist;
+          travelTimeDrive = `${Math.max(2, Math.round(computedDist * 3))} min drive`;
+          travelTimeWalk = `${Math.max(5, Math.round(computedDist * 12))} min walk`;
+        }
+      }
+
       return {
-        ...pharm,
+        id: pharm.id,
+        pharmacyId: pharm.id,
+        name: pharm.name,
+        address: pharm.address,
+        phone: pharm.phone,
+        rating: pharm.rating,
+        isOpen: pharm.isOpen,
+        openingTime: pharm.openingTime,
+        closingTime: pharm.closingTime,
+        deliveryAvailable: pharm.deliveryAvailable,
+        deliveryFee: pharm.deliveryFee,
+        distanceKm,
+        travelTimeDrive,
+        travelTimeWalk,
+        medicineId: targetMedicine.id,
+        medicineName: targetMedicine.brand || targetMedicine.name,
+        genericName: targetMedicine.genericName,
+        strength: targetMedicine.strength || "",
+        otc: !targetMedicine.prescriptionRequired,
+        price: inv ? inv.price : targetMedicine.price,
         stock: inv ? inv.stock : 0,
-        price: inv ? inv.price : 0,
         availability: inv ? inv.availability : "out",
+        stockType: inv?.stockType || "verified",
+        lastVerifiedAt: inv?.lastVerifiedAt || pharm.updatedAt,
       };
     });
 
+    results.sort((a, b) => a.distanceKm - b.distanceKm);
+
     res.status(200).json({
       success: true,
+      medicine: targetMedicine,
       pharmacies: results,
     });
   } catch (error) {
