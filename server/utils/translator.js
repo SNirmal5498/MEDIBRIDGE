@@ -4,8 +4,65 @@ const TranslationCache = require("../models/TranslationCache");
 // In-memory cache map for lightning-fast microsecond lookups
 const memoryCache = new Map();
 
+// In-flight request deduplication map (hash -> Promise<string|null>)
+const inFlightRequests = new Map();
+
+// Provider cooldown tracking map (providerName -> { cooldownUntil: number, backoffSec: number })
+const providerCooldowns = new Map();
+
 // Supported target languages
 const SUPPORTED_LANGUAGES = ["en", "hi", "ta", "te", "ml", "kn"];
+
+const COOLDOWN_BASE_SEC = 60;
+const COOLDOWN_MAX_SEC = 600;
+
+/**
+ * Check if provider is currently on rate-limit cooldown
+ */
+function isProviderAvailable(providerName) {
+  const info = providerCooldowns.get(providerName);
+  if (!info) return true;
+  return Date.now() >= info.cooldownUntil;
+}
+
+/**
+ * Put provider on cooldown when encountering HTTP 429 or rate limits
+ */
+function handleProviderRateLimit(providerName, error) {
+  const now = Date.now();
+  const current = providerCooldowns.get(providerName) || { backoffSec: COOLDOWN_BASE_SEC };
+
+  let retryAfterSec = null;
+  if (error.response?.headers?.["retry-after"]) {
+    const val = parseInt(error.response.headers["retry-after"], 10);
+    if (!isNaN(val) && val > 0) {
+      retryAfterSec = val;
+    }
+  }
+
+  const rawBackoff = retryAfterSec || current.backoffSec * 2;
+  const backoff = Math.min(COOLDOWN_MAX_SEC, Math.max(COOLDOWN_BASE_SEC, rawBackoff));
+  const jitter = Math.floor(Math.random() * 5);
+  const cooldownSec = backoff + jitter;
+  const cooldownUntil = now + cooldownSec * 1000;
+
+  const wasAvailable = isProviderAvailable(providerName);
+  providerCooldowns.set(providerName, { cooldownUntil, backoffSec: backoff });
+
+  if (wasAvailable) {
+    const status = error.response?.status || "429";
+    console.warn(`[Translator] Provider '${providerName}' rate limited (HTTP ${status}). Cooldown for ${cooldownSec}s.`);
+  }
+}
+
+/**
+ * Reset provider backoff on successful response
+ */
+function resetProviderStatus(providerName) {
+  if (providerCooldowns.has(providerName)) {
+    providerCooldowns.delete(providerName);
+  }
+}
 
 /**
  * Check if text contains non-translatable technical content only
@@ -15,7 +72,6 @@ function shouldSkipTranslation(text, targetLang) {
   const trimmed = text.trim();
   if (!trimmed) return true;
   if (targetLang === "en") return true;
-  // If text is purely numbers, symbols, emails, or short codes
   if (/^[\d\s.,\/#!$%\^&\*;:{}=\-_`~()]+$/.test(trimmed)) return true;
   if (/^https?:\/\//i.test(trimmed)) return true;
   if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(trimmed)) return true;
@@ -23,94 +79,98 @@ function shouldSkipTranslation(text, targetLang) {
 }
 
 /**
- * Call external Translation API depending on available environment variables & fallback
+ * Call external Translation API with eligible provider fallback sequence
  */
 async function fetchTranslationFromAPI(text, targetLang, sourceLang = "en") {
-  const provider = (process.env.TRANSLATION_PROVIDER || "auto").toLowerCase();
+  const providerConfig = (process.env.TRANSLATION_PROVIDER || "auto").toLowerCase();
   const googleApiKey = process.env.GOOGLE_TRANSLATE_API_KEY;
   const libreApiUrl = process.env.LIBRETRANSLATE_API_URL;
   const libreApiKey = process.env.LIBRETRANSLATE_API_KEY;
 
   // 1. Google Cloud Translation API (if API Key provided)
-  if (googleApiKey && (provider === "google" || provider === "auto")) {
+  if (googleApiKey && (providerConfig === "google" || providerConfig === "auto") && isProviderAvailable("google_cloud")) {
     try {
       const response = await axios.post(
         `https://translation.googleapis.com/language/translate/v2?key=${googleApiKey}`,
-        {
-          q: text,
-          source: sourceLang,
-          target: targetLang,
-          format: "text",
-        },
+        { q: text, source: sourceLang, target: targetLang, format: "text" },
         { timeout: 5000 }
       );
       if (response.data?.data?.translations?.[0]?.translatedText) {
+        resetProviderStatus("google_cloud");
         return response.data.data.translations[0].translatedText;
       }
     } catch (err) {
-      console.warn("Google Cloud Translation API error:", err.message);
+      if (err.response?.status === 429 || err.response?.status === 403) {
+        handleProviderRateLimit("google_cloud", err);
+      }
     }
   }
 
-  // 2. LibreTranslate API (if custom URL/Key provided)
-  if (libreApiUrl && (provider === "libretranslate" || provider === "auto")) {
+  // 2. LibreTranslate API (if custom URL provided)
+  if (libreApiUrl && (providerConfig === "libretranslate" || providerConfig === "auto") && isProviderAvailable("libretranslate")) {
     try {
       const response = await axios.post(
         `${libreApiUrl.replace(/\/$/, "")}/translate`,
-        {
-          q: text,
-          source: sourceLang,
-          target: targetLang,
-          format: "text",
-          api_key: libreApiKey || undefined,
-        },
+        { q: text, source: sourceLang, target: targetLang, format: "text", api_key: libreApiKey || undefined },
         { timeout: 5000 }
       );
       if (response.data?.translatedText) {
+        resetProviderStatus("libretranslate");
         return response.data.translatedText;
       }
     } catch (err) {
-      console.warn("LibreTranslate API error:", err.message);
+      if (err.response?.status === 429) {
+        handleProviderRateLimit("libretranslate", err);
+      }
     }
   }
 
-  // 3. MyMemory Translation API (Free Public API requiring no secret key)
-  try {
-    const langpair = `${sourceLang}|${targetLang}`;
-    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(langpair)}`;
-    const response = await axios.get(url, { timeout: 4000 });
-    
-    if (
-      response.data?.responseData?.translatedText &&
-      response.data.responseData.match > 0.3 &&
-      !response.data.responseData.translatedText.includes("MYMEMORY WARNING")
-    ) {
-      return response.data.responseData.translatedText;
+  // 3. MyMemory Translation API (Public Fallback)
+  if (isProviderAvailable("mymemory")) {
+    try {
+      const langpair = `${sourceLang}|${targetLang}`;
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(langpair)}`;
+      const response = await axios.get(url, { timeout: 4000 });
+      if (
+        response.data?.responseData?.translatedText &&
+        response.data.responseData.match > 0.3 &&
+        !response.data.responseData.translatedText.includes("MYMEMORY WARNING")
+      ) {
+        resetProviderStatus("mymemory");
+        return response.data.responseData.translatedText;
+      }
+    } catch (err) {
+      if (err.response?.status === 429) {
+        handleProviderRateLimit("mymemory", err);
+      }
     }
-  } catch (err) {
-    console.warn("MyMemory Translation API error:", err.message);
   }
 
   // 4. Google Translate Public Free Endpoint (Fallback)
-  try {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
-    const response = await axios.get(url, { timeout: 4000 });
-    if (response.data && Array.isArray(response.data[0])) {
-      const translatedParts = response.data[0].map((part) => part[0]).filter(Boolean);
-      if (translatedParts.length > 0) {
-        return translatedParts.join("");
+  if (isProviderAvailable("google_free")) {
+    try {
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+      const response = await axios.get(url, { timeout: 4000 });
+      if (response.data && Array.isArray(response.data[0])) {
+        const translatedParts = response.data[0].map((part) => part[0]).filter(Boolean);
+        if (translatedParts.length > 0) {
+          resetProviderStatus("google_free");
+          return translatedParts.join("");
+        }
+      }
+    } catch (err) {
+      if (err.response?.status === 429) {
+        handleProviderRateLimit("google_free", err);
       }
     }
-  } catch (err) {
-    console.warn("Google Translate Public endpoint error:", err.message);
   }
 
-  // Ultimate fallback: return original text safely
-  return text;
+  // Every provider is either on cooldown or failed -> return null to signal failure
+  return null;
 }
 
 /**
- * Translate a single text string with multi-level caching (Memory -> MongoDB -> API)
+ * Translate a single text string with multi-level caching & in-flight deduplication
  */
 async function translateText(text, targetLang = "en", sourceLang = "en") {
   if (shouldSkipTranslation(text, targetLang)) {
@@ -133,32 +193,48 @@ async function translateText(text, targetLang = "en", sourceLang = "en") {
       return cachedDoc.translatedText;
     }
   } catch (err) {
-    console.warn("MongoDB TranslationCache query error:", err.message);
+    // Ignore DB query error
   }
 
-  // Level 3: Call Translation API
-  const translated = await fetchTranslationFromAPI(cleanText, targetLang, sourceLang);
+  // Level 3: In-flight deduplication check
+  if (inFlightRequests.has(hash)) {
+    const inFlightResult = await inFlightRequests.get(hash);
+    return inFlightResult || cleanText;
+  }
 
-  // Store result in memory and DB cache
-  memoryCache.set(hash, translated);
+  // Level 4: Execute Call to Translation API providers
+  const fetchPromise = (async () => {
+    try {
+      return await fetchTranslationFromAPI(cleanText, targetLang, sourceLang);
+    } catch (e) {
+      return null;
+    } finally {
+      inFlightRequests.delete(hash);
+    }
+  })();
 
-  if (translated !== cleanText) {
+  inFlightRequests.set(hash, fetchPromise);
+  const translated = await fetchPromise;
+
+  // Cache ONLY valid successful translations
+  if (translated && typeof translated === "string" && translated !== cleanText) {
+    memoryCache.set(hash, translated);
     TranslationCache.create({
       hash,
       sourceText: cleanText,
       sourceLang,
       targetLang,
       translatedText: translated,
-    }).catch(() => {
-      // Ignore duplicate key or async db write error
-    });
+    }).catch(() => {});
+    return translated;
   }
 
-  return translated;
+  // Fallback: return original text without caching failure
+  return cleanText;
 }
 
 /**
- * Translate an array of text strings concurrently
+ * Translate an array of text strings concurrently with deduplication
  */
 async function translateArray(arr, targetLang = "en", sourceLang = "en") {
   if (!Array.isArray(arr) || arr.length === 0 || targetLang === "en") {
@@ -168,7 +244,7 @@ async function translateArray(arr, targetLang = "en", sourceLang = "en") {
 }
 
 /**
- * Translate dynamic fields of an object safely
+ * Translate dynamic fields of an object with string deduplication
  */
 async function translateObject(obj, fieldKeys, targetLang = "en", sourceLang = "en") {
   if (!obj || typeof obj !== "object" || targetLang === "en") {
@@ -184,7 +260,6 @@ async function translateObject(obj, fieldKeys, targetLang = "en", sourceLang = "
       } else if (Array.isArray(result[key])) {
         result[key] = await translateArray(result[key], targetLang, sourceLang);
       } else if (typeof result[key] === "object") {
-        // Handle nested objects like dosage { adults, children, missedDose, overdose }
         const nestedKeys = Object.keys(result[key]);
         const updatedNested = { ...result[key] };
         for (const nKey of nestedKeys) {
@@ -217,6 +292,8 @@ async function translateMedicine(medicine, targetLang = "en") {
     "manufacturer",
     "dosageForm",
     "form",
+    "strength",
+    "packSize",
     "category",
     "shortDescription",
     "description",
@@ -241,3 +318,4 @@ module.exports = {
   translateMedicine,
   SUPPORTED_LANGUAGES,
 };
+

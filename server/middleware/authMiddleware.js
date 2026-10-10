@@ -44,7 +44,67 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
+const requirePharmacyAccess = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: "Authentication required" });
+  }
+
+  if (req.user.role === "admin") {
+    return next();
+  }
+
+  if (!["pharmacy_owner", "pharmacy_staff"].includes(req.user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied. Pharmacy owner or staff account required.",
+    });
+  }
+
+  // Determine target pharmacy ID safely from params, query, or body
+  const targetPharmacyId =
+    (req.params && req.params.pharmacyId) ||
+    (req.body && req.body.pharmacyId) ||
+    (req.query && req.query.pharmacyId) ||
+    req.user.pharmacyId;
+
+  if (!req.user.pharmacyId || (targetPharmacyId && req.user.pharmacyId !== targetPharmacyId)) {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied. You are not authorized to access records for this pharmacy.",
+    });
+  }
+
+  next();
+};
+
+const requireStaffPermission = (permission) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: "Authentication required" });
+    }
+
+    if (req.user.role === "admin" || req.user.role === "pharmacy_owner") {
+      return next();
+    }
+
+    if (req.user.role === "pharmacy_staff") {
+      const perms = req.user.staffPermissions || [];
+      if (!perms.includes(permission)) {
+        return res.status(403).json({
+          success: false,
+          message: `Access denied. Staff permission '${permission}' required.`,
+        });
+      }
+      return next();
+    }
+
+    return res.status(403).json({ success: false, message: "Forbidden" });
+  };
+};
+
 module.exports = {
   authMiddleware,
   requireAdmin,
+  requirePharmacyAccess,
+  requireStaffPermission,
 };

@@ -6,7 +6,7 @@ import { isFavorite, toggleFavorite } from "../../utils/medicineData";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../hooks/useLanguage";
-import { PHARMACIES } from "../../utils/constants";
+import pharmacyService from "../../services/pharmacyService";
 import { useMedicineCardLocalization } from "../../hooks/useMedicineCardLocalization";
 
 export default function MedicineCard({ medicine, compareSelected, onToggleCompare, compareDisabled }) {
@@ -27,7 +27,7 @@ export default function MedicineCard({ medicine, compareSelected, onToggleCompar
     }
   }
 
-  const handleOrderNow = () => {
+  const handleOrderNow = async () => {
     if (!isAuthenticated) {
       navigate("/login");
       return;
@@ -35,9 +35,16 @@ export default function MedicineCard({ medicine, compareSelected, onToggleCompar
 
     if (!loc.isOtc) return;
 
-    const defaultPharmacy = PHARMACIES[0];
-    addToCart(loc.raw || medicine, defaultPharmacy, 1);
-    navigate("/checkout");
+    try {
+      const res = await pharmacyService.getPharmacies();
+      const defaultPharmacy = res?.pharmacies?.[0];
+      if (defaultPharmacy) {
+        addToCart(loc.raw || medicine, defaultPharmacy, 1);
+        navigate("/checkout");
+      }
+    } catch (e) {
+      console.error("Order now failed:", e);
+    }
   };
 
   return (
@@ -53,26 +60,24 @@ export default function MedicineCard({ medicine, compareSelected, onToggleCompar
       </button>
 
       <div className="flex-1">
-        <div className="flex items-start justify-between gap-2 pr-9">
-          <div className="flex flex-wrap gap-1.5">
-            {loc.badges?.bestSeller && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-700">
-                <Trophy className="w-3 h-3" /> {t("medicine.bestSeller")}
-              </span>
-            )}
-            {loc.badges?.topRated && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full bg-primary-50 text-primary-hover">
-                <Sparkles className="w-3 h-3" /> {t("medicine.topRated")}
-              </span>
-            )}
-            {loc.badges?.lowestPrice && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full bg-blue-50 text-blue-700">
-                <Tag className="w-3 h-3" /> {t("medicine.lowestPrice")}
-              </span>
-            )}
-          </div>
+        <div className="flex flex-wrap items-center gap-1.5 pr-10 mb-2 min-h-[26px]">
+          {loc.badges?.bestSeller && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
+              <Trophy className="w-3 h-3" /> {t("medicine.bestSeller")}
+            </span>
+          )}
+          {loc.badges?.topRated && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary-50 text-primary-hover">
+              <Sparkles className="w-3 h-3" /> {t("medicine.topRated")}
+            </span>
+          )}
+          {loc.badges?.lowestPrice && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+              <Tag className="w-3 h-3" /> {t("medicine.lowestPrice")}
+            </span>
+          )}
           <span
-            className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${
+            className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
               loc.isOtc ? "bg-primary-50 text-primary-hover" : "bg-danger-50 text-danger"
             }`}
           >
@@ -80,16 +85,27 @@ export default function MedicineCard({ medicine, compareSelected, onToggleCompar
           </span>
         </div>
 
-        <h3 className="mt-3 font-display font-bold text-text">{loc.brand}</h3>
-        {loc.category && (
-          <span className="inline-block mt-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-text-muted">
-            {loc.category}
-          </span>
+        {loc.loading ? (
+          <div className="mt-3 space-y-2 animate-pulse">
+            <div className="h-5 bg-slate-200 rounded w-3/4"></div>
+            <div className="h-4 bg-slate-200 rounded w-1/3"></div>
+            <div className="h-4 bg-slate-200 rounded w-full"></div>
+            <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+          </div>
+        ) : (
+          <>
+            <h3 className="mt-3 font-display font-bold text-text">{loc.brand}</h3>
+            {loc.category && (
+              <span className="inline-block mt-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-text-muted">
+                {loc.category}
+              </span>
+            )}
+            <p className="text-sm text-text-muted mt-1">
+              {loc.genericName} {loc.strength ? `· ${loc.strength}` : ""}
+            </p>
+            {loc.manufacturer && <p className="text-xs text-text-muted mt-1">{loc.manufacturer}</p>}
+          </>
         )}
-        <p className="text-sm text-text-muted mt-1">
-          {loc.genericName} {loc.strength ? `· ${loc.strength}` : ""}
-        </p>
-        {loc.manufacturer && <p className="text-xs text-text-muted mt-1">{loc.manufacturer}</p>}
 
         {loc.rating !== undefined && loc.rating !== null && (
           <div className="flex items-center gap-1 mt-2">

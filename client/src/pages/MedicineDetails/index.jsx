@@ -2,8 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Pill, ShoppingCart, Lock, GitCompare, Star, ChevronRight, Loader2 } from "lucide-react";
 import { getMedicineById as getLocalMedicineById } from "../../utils/medicineData";
-import { medicineService } from "../../services/medicineService";
-import { PHARMACIES } from "../../utils/constants";
+import pharmacyService from "../../services/pharmacyService";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../hooks/useLanguage";
@@ -22,6 +21,7 @@ import {
 } from "../../utils/formatters";
 
 import { useDynamicTranslation } from "../../hooks/useDynamicTranslation";
+import { useMedicineCardLocalization } from "../../hooks/useMedicineCardLocalization";
 
 const RECENT_KEY = "medibridge_recently_viewed";
 
@@ -50,14 +50,16 @@ export default function MedicineDetails() {
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
   const { t, language } = useLanguage();
+  const langCode = language?.code || "en";
 
   const [medicine, setMedicine] = useState(null);
   const [alternatives, setAlternatives] = useState([]);
+  const [nearbyPharmacies, setNearbyPharmacies] = useState([]);
+  const [pharmaciesLoading, setPharmaciesLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const { data: displayMedicine } = useDynamicTranslation(medicine, "medicine");
-  const activeMed = displayMedicine || medicine;
+  const { data: displayMedicine, loading: translationLoading } = useDynamicTranslation(medicine, "medicine");
 
   useEffect(() => {
     let isMounted = true;
@@ -103,7 +105,39 @@ export default function MedicineDetails() {
     };
   }, [id]);
 
-  const handleOrderNow = () => {
+  useEffect(() => {
+    let isMounted = true;
+    async function loadPharmacies() {
+      setPharmaciesLoading(true);
+      try {
+        if (id) {
+          const availRes = await pharmacyService.getMedicineAvailability(id);
+          const availPharmacies = availRes?.pharmacies || availRes?.data || [];
+          if (isMounted && Array.isArray(availPharmacies) && availPharmacies.length > 0) {
+            setNearbyPharmacies(availPharmacies);
+            setPharmaciesLoading(false);
+            return;
+          }
+        }
+        // Fallback to all active pharmacies in DB
+        const allRes = await pharmacyService.getPharmacies();
+        const allPharmacies = allRes?.pharmacies || allRes?.data || [];
+        if (isMounted) {
+          setNearbyPharmacies(allPharmacies);
+        }
+      } catch (e) {
+        if (isMounted) setNearbyPharmacies([]);
+      } finally {
+        if (isMounted) setPharmaciesLoading(false);
+      }
+    }
+    loadPharmacies();
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  const handleOrderNow = async () => {
     if (!isAuthenticated) {
       navigate("/login");
       return;
@@ -111,12 +145,26 @@ export default function MedicineDetails() {
 
     if (!medicine || !medicine.otc) return;
 
-    const defaultPharmacy = PHARMACIES[0];
+    let defaultPharmacy = nearbyPharmacies[0];
+    if (!defaultPharmacy) {
+      try {
+        const res = await pharmacyService.getPharmacies();
+        defaultPharmacy = res?.pharmacies?.[0] || null;
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    if (!defaultPharmacy) return;
+
     addToCart(medicine, defaultPharmacy, 1);
     navigate("/checkout");
   };
 
-  if (loading) {
+  const loc = useMedicineCardLocalization(medicine);
+  const isPending = loading || loc.loading;
+
+  if (isPending) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-24 flex flex-col items-center justify-center text-text-muted">
         <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
@@ -127,7 +175,8 @@ export default function MedicineDetails() {
 
   if (error || !medicine) return <NotFound />;
 
-  const isOtc = activeMed.otc === true || activeMed.prescriptionRequired === false;
+  const activeMed = (langCode === "en" ? medicine : (displayMedicine || medicine));
+  const isOtc = loc.isOtc;
 
   const warningLabelMap = {
     pregnancy: t("details.pregnancy"),
@@ -138,13 +187,14 @@ export default function MedicineDetails() {
     driving: t("details.driving"),
   };
 
-  const brand = formatBrandName(activeMed.brand || activeMed.name, language.code);
-  const generic = formatGenericName(activeMed.genericName, language.code);
-  const strength = formatStrength(activeMed.strength, language.code);
-  const mfg = formatManufacturer(activeMed.manufacturer, language.code);
-  const pack = formatPackSize(activeMed.packSize, language.code);
-  const description = formatMedicineText(activeMed.description, language.code);
-  const storage = formatMedicineText(activeMed.storage, language.code);
+  const brand = loc.brand;
+  const generic = loc.genericName;
+  const strength = loc.strength;
+  const mfg = loc.manufacturer;
+  const pack = loc.packSize;
+  const category = loc.category;
+  const description = loc.description || activeMed.description || "";
+  const storage = activeMed.storage || "";
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -162,7 +212,7 @@ export default function MedicineDetails() {
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-text-muted">
-              {getCategoryTranslation(language.code, activeMed.category)}
+              {category}
             </span>
             <span
               className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
@@ -222,7 +272,7 @@ export default function MedicineDetails() {
         {activeMed.uses && activeMed.uses.length > 0 && (
           <Section title={t("details.uses")}>
             <ul className="list-disc list-inside space-y-1.5 text-sm text-text">
-              {activeMed.uses.map((u) => <li key={u}>{formatMedicineText(u, language.code)}</li>)}
+              {activeMed.uses.map((u) => <li key={u}>{u}</li>)}
             </ul>
           </Section>
         )}
@@ -230,10 +280,10 @@ export default function MedicineDetails() {
         {activeMed.dosage && (
           <Section title={t("details.dosage")}>
             <dl className="grid sm:grid-cols-2 gap-4 text-sm">
-              {activeMed.dosage.adults && <div><dt className="font-semibold text-text">{t("details.adults")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(activeMed.dosage.adults, language.code)}</dd></div>}
-              {activeMed.dosage.children && <div><dt className="font-semibold text-text">{t("details.children")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(activeMed.dosage.children, language.code)}</dd></div>}
-              {activeMed.dosage.missedDose && <div><dt className="font-semibold text-text">{t("details.missedDose")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(activeMed.dosage.missedDose, language.code)}</dd></div>}
-              {activeMed.dosage.overdose && <div><dt className="font-semibold text-text">{t("details.overdose")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(activeMed.dosage.overdose, language.code)}</dd></div>}
+              {activeMed.dosage.adults && <div><dt className="font-semibold text-text">{t("details.adults")}</dt><dd className="text-text-muted mt-1">{activeMed.dosage.adults}</dd></div>}
+              {activeMed.dosage.children && <div><dt className="font-semibold text-text">{t("details.children")}</dt><dd className="text-text-muted mt-1">{activeMed.dosage.children}</dd></div>}
+              {activeMed.dosage.missedDose && <div><dt className="font-semibold text-text">{t("details.missedDose")}</dt><dd className="text-text-muted mt-1">{activeMed.dosage.missedDose}</dd></div>}
+              {activeMed.dosage.overdose && <div><dt className="font-semibold text-text">{t("details.overdose")}</dt><dd className="text-text-muted mt-1">{activeMed.dosage.overdose}</dd></div>}
             </dl>
           </Section>
         )}
@@ -245,7 +295,7 @@ export default function MedicineDetails() {
                 <div>
                   <p className="font-semibold text-text mb-1.5">{t("details.commonSideEffects")}</p>
                   <ul className="list-disc list-inside space-y-1 text-text-muted">
-                    {activeMed.sideEffects.common.map((s) => <li key={s}>{formatMedicineText(s, language.code)}</li>)}
+                    {activeMed.sideEffects.common.map((s) => <li key={s}>{s}</li>)}
                   </ul>
                 </div>
               )}
@@ -253,7 +303,7 @@ export default function MedicineDetails() {
                 <div>
                   <p className="font-semibold text-text mb-1.5">{t("details.rareSideEffects")}</p>
                   <ul className="list-disc list-inside space-y-1 text-text-muted">
-                    {activeMed.sideEffects.rare.map((s) => <li key={s}>{formatMedicineText(s, language.code)}</li>)}
+                    {activeMed.sideEffects.rare.map((s) => <li key={s}>{s}</li>)}
                   </ul>
                 </div>
               )}
@@ -267,7 +317,7 @@ export default function MedicineDetails() {
               {Object.entries(activeMed.warnings).map(([key, value]) => (
                 <div key={key}>
                   <dt className="font-semibold text-text capitalize">{warningLabelMap[key] || key}</dt>
-                  <dd className="text-text-muted mt-1">{formatMedicineText(value, language.code)}</dd>
+                  <dd className="text-text-muted mt-1">{value}</dd>
                 </div>
               ))}
             </dl>
@@ -278,7 +328,7 @@ export default function MedicineDetails() {
           <Section title={t("details.drugInteractions")}>
             {activeMed.interactions.length > 0 ? (
               <ul className="list-disc list-inside space-y-1.5 text-sm text-text-muted">
-                {activeMed.interactions.map((i) => <li key={i}>{formatMedicineText(i, language.code)}</li>)}
+                {activeMed.interactions.map((i) => <li key={i}>{i}</li>)}
               </ul>
             ) : (
               <p className="text-sm text-text-muted">{t("details.noInteractions") || "No major interactions reported."}</p>
@@ -289,13 +339,13 @@ export default function MedicineDetails() {
         {activeMed.foodInteractions && (
           <Section title={t("details.foodInteractions")}>
             <dl className="grid sm:grid-cols-2 gap-4 text-sm">
-              {activeMed.foodInteractions.beforeFood && <div><dt className="font-semibold text-text">{t("details.beforeFood")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(activeMed.foodInteractions.beforeFood, language.code)}</dd></div>}
-              {activeMed.foodInteractions.afterFood && <div><dt className="font-semibold text-text">{t("details.afterFood")}</dt><dd className="text-text-muted mt-1">{formatMedicineText(activeMed.foodInteractions.afterFood, language.code)}</dd></div>}
+              {activeMed.foodInteractions.beforeFood && <div><dt className="font-semibold text-text">{t("details.beforeFood")}</dt><dd className="text-text-muted mt-1">{activeMed.foodInteractions.beforeFood}</dd></div>}
+              {activeMed.foodInteractions.afterFood && <div><dt className="font-semibold text-text">{t("details.afterFood")}</dt><dd className="text-text-muted mt-1">{activeMed.foodInteractions.afterFood}</dd></div>}
             </dl>
             {activeMed.foodInteractions.avoid && activeMed.foodInteractions.avoid.length > 0 && (
               <p className="mt-3 text-sm text-text-muted">
                 <span className="font-semibold text-text">{t("details.foodsToAvoid")}: </span>
-                {activeMed.foodInteractions.avoid.map((item) => formatMedicineText(item, language.code)).join(", ")}
+                {activeMed.foodInteractions.avoid.join(", ")}
               </p>
             )}
           </Section>
@@ -319,9 +369,20 @@ export default function MedicineDetails() {
 
       <section className="mt-10">
         <h2 className="font-display font-bold text-lg text-text mb-4">{t("details.nearbyPharmacies")}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {PHARMACIES.map((p) => <PharmacyCard key={p.id} pharmacy={p} />)}
-        </div>
+        {pharmaciesLoading ? (
+          <div className="flex items-center gap-2 text-text-muted text-sm py-4">
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            <span>{t("pharmacy.loading")}</span>
+          </div>
+        ) : nearbyPharmacies.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {nearbyPharmacies.map((p) => <PharmacyCard key={p.id || p._id} pharmacy={p} />)}
+          </div>
+        ) : (
+          <p className="text-sm text-text-muted py-4 bg-slate-50 rounded-xl px-4 border border-border">
+            {t("pharmacy.noPharmacies")}
+          </p>
+        )}
       </section>
     </div>
   );

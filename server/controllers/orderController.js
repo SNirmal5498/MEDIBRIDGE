@@ -55,6 +55,15 @@ const createOrder = async (req, res) => {
       });
     }
 
+    const Pharmacy = require("../models/Pharmacy");
+    const targetPharmacy = await Pharmacy.findOne({ id: pharmacy.id });
+    if (!targetPharmacy || targetPharmacy.isActive === false || targetPharmacy.approvalStatus !== "approved") {
+      return res.status(400).json({
+        success: false,
+        message: "Selected pharmacy is not active or approved for taking orders",
+      });
+    }
+
     if (!deliveryAddress || !deliveryAddress.phone || !deliveryAddress.pincode) {
       return res.status(400).json({
         success: false,
@@ -219,7 +228,8 @@ const createOrder = async (req, res) => {
 
 const getUserOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
+    const userId = req.user._id || req.user.id;
+    const orders = await Order.find({ user: userId }).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -237,8 +247,9 @@ const getUserOrders = async (req, res) => {
 const getOrderById = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user._id || req.user.id;
 
-    const order = await Order.findOne({ orderId: id, user: req.user.id });
+    const order = await Order.findOne({ orderId: id, user: userId });
 
     if (!order) {
       return res.status(404).json({

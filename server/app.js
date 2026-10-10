@@ -9,6 +9,7 @@ const prescriptionRoutes = require("./routes/prescriptionRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
+const pharmacyOwnerRoutes = require("./routes/pharmacyOwnerRoutes");
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/pharmacy-owner", pharmacyOwnerRoutes);
 
 // Healthcheck / Default Route
 app.get("/", (req, res) => {

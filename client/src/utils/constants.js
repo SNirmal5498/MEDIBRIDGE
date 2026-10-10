@@ -65,12 +65,7 @@ export const PRESCRIPTION_MEDICINES = [
   { id: "rx-2", name: "Metformin", brand: "Glycomet", strength: "500mg", manufacturer: "USV", otc: false },
 ];
 
-export const PHARMACIES = [
-  { id: "ph-1", name: "Apollo Pharmacy", rating: 4.5, distance: "0.8 km", isOpen: true, phone: "+91 98765 43210", address: "MG Road, Bengaluru" },
-  { id: "ph-2", name: "MedPlus", rating: 4.2, distance: "1.2 km", isOpen: true, phone: "+91 98765 11223", address: "Indiranagar, Bengaluru" },
-  { id: "ph-3", name: "Wellness Forever", rating: 4.0, distance: "2.4 km", isOpen: false, phone: "+91 98765 99887", address: "Koramangala, Bengaluru" },
-  { id: "ph-4", name: "Netmeds Pharmacy", rating: 4.4, distance: "3.1 km", isOpen: true, phone: "+91 98765 55667", address: "HSR Layout, Bengaluru" },
-];
+export const PHARMACIES = [];
 
 export const EMERGENCY_CONTACTS = [
   { label: "Ambulance", number: "108" },

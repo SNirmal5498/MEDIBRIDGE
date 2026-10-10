@@ -56,8 +56,26 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "customer", "admin", "pharmacy_owner", "pharmacy_staff"],
       default: "user",
+    },
+
+    pharmacyId: {
+      type: String,
+      default: "",
+      index: true,
+    },
+
+    staffPermissions: {
+      type: [String],
+      default: [
+        "inventory_read",
+        "inventory_write",
+        "orders_read",
+        "orders_update",
+        "prescriptions_read",
+        "prescriptions_review",
+      ],
     },
 
     accountStatus: {

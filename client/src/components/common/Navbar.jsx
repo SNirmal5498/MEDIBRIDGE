@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   ShieldCheck,
+  Building2,
 } from "lucide-react";
 import { NAV_LINKS, AUTH_NAV_LINKS, LANGUAGES } from "../../utils/constants";
 import { useAuth } from "../../hooks/useAuth";
@@ -56,13 +57,27 @@ export default function Navbar() {
         <div className="bg-slate-900 text-white text-xs px-4 py-2 flex items-center justify-between border-b border-slate-800">
           <span className="flex items-center gap-2 font-medium">
             <ShieldCheck className="w-4 h-4 text-primary-hover shrink-0" />
-            <span>Administrator Customer View — You are currently previewing the customer storefront.</span>
+            <span>Administrator View — Previewing Customer Storefront.</span>
           </span>
           <NavLink
             to="/admin"
             className="font-bold text-xs bg-primary hover:bg-primary-hover text-white px-3 py-1 rounded-md transition-colors flex items-center gap-1 shrink-0"
           >
             Return to Admin Dashboard &rarr;
+          </NavLink>
+        </div>
+      )}
+      {["pharmacy_owner", "pharmacy_staff"].includes(user?.role) && (
+        <div className="bg-teal-950 text-teal-100 text-xs px-4 py-2 flex items-center justify-between border-b border-teal-900">
+          <span className="flex items-center gap-2 font-medium">
+            <Building2 className="w-4 h-4 text-teal-400 shrink-0" />
+            <span>Pharmacy Portal Active — Logged in as {user?.role?.replace("_", " ")?.toUpperCase()}.</span>
+          </span>
+          <NavLink
+            to="/pharmacy-owner"
+            className="font-bold text-xs bg-teal-600 hover:bg-teal-500 text-white px-3 py-1 rounded-md transition-colors flex items-center gap-1 shrink-0"
+          >
+            Open Pharmacy Portal &rarr;
           </NavLink>
         </div>
       )}
@@ -159,6 +174,19 @@ export default function Navbar() {
                       >
                         <ShieldCheck className="w-4 h-4 text-primary-hover" />
                         Admin Dashboard
+                      </NavLink>
+                    )}
+                    {["pharmacy_owner", "pharmacy_staff"].includes(user?.role) && (
+                      <NavLink
+                        to="/pharmacy-owner"
+                        onClick={() => setUserMenuOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-bold transition-colors
+                          ${isActive ? "text-teal-600 bg-teal-50" : "text-teal-700 hover:bg-teal-50"}`
+                        }
+                      >
+                        <Building2 className="w-4 h-4 text-teal-600" />
+                        Pharmacy Portal
                       </NavLink>
                     )}
                     <NavLink

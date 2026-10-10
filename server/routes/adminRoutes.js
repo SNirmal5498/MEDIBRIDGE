@@ -24,6 +24,9 @@ const {
   updateSettings,
   getAuditLogs,
   getSystemHealth,
+  reviewPharmacyApplication,
+  getCatalogSubmissions,
+  reviewCatalogSubmission,
 } = require("../controllers/adminController");
 
 // All admin routes require authenticated user with role == 'admin'
@@ -41,6 +44,10 @@ router.get("/pharmacies", getPharmacies);
 router.post("/pharmacies", addPharmacy);
 router.put("/pharmacies/:id", updatePharmacy);
 router.delete("/pharmacies/:id", deletePharmacy);
+router.patch("/pharmacies/:id/application", reviewPharmacyApplication);
+
+router.get("/catalog-submissions", getCatalogSubmissions);
+router.patch("/catalog-submissions/:id/review", reviewCatalogSubmission);
 
 router.get("/inventory", getInventory);
 router.post("/inventory", updateInventory);

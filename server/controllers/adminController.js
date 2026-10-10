@@ -159,9 +159,19 @@ const addPharmacy = async (req, res) => {
       data.id = `pharm-${slug}-${Date.now().toString().slice(-4)}`;
     }
 
-    const pharmacy = await Pharmacy.create(data);
-    res.status(201).json({ success: true, pharmacy, message: "Pharmacy added successfully." });
+    const pharmacy = new Pharmacy(data);
+    await applyOwnerAndApprovalChanges(pharmacy, data, req.user);
+    await pharmacy.save();
+
+    const populatedPharmacy = await Pharmacy.findById(pharmacy._id)
+      .populate("owner", "name email role pharmacyId")
+      .lean();
+
+    res.status(201).json({ success: true, pharmacy: populatedPharmacy, message: "Pharmacy added successfully." });
   } catch (error) {
+    if (error.statusCode === 400) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
     if (error.code === 11000) {
       return res.status(409).json({ success: false, message: "A pharmacy with this ID or details already exists." });
     }
@@ -169,15 +179,106 @@ const addPharmacy = async (req, res) => {
   }
 };
 
+// Helper to process owner assignment, safe reassignment, and approval status updates
+const applyOwnerAndApprovalChanges = async (pharmacy, data, adminUser) => {
+  // 1. Owner Assignment / Reassignment
+  if (data.ownerUserId !== undefined || data.owner !== undefined) {
+    const targetOwnerId = data.ownerUserId !== undefined ? data.ownerUserId : data.owner;
+
+    if (!targetOwnerId || targetOwnerId === "") {
+      // Unassign current owner if any
+      if (pharmacy.owner) {
+        const prevOwnerUser = await User.findById(pharmacy.owner);
+        if (prevOwnerUser) {
+          const otherPharm = await Pharmacy.exists({ owner: prevOwnerUser._id, id: { $ne: pharmacy.id } });
+          if (!otherPharm) {
+            prevOwnerUser.role = "user";
+            prevOwnerUser.pharmacyId = "";
+            await prevOwnerUser.save();
+          }
+        }
+      }
+      pharmacy.owner = null;
+      pharmacy.ownerId = "";
+    } else {
+      // Assign or reassign target owner
+      const targetOwnerUser = await User.findById(targetOwnerId);
+      if (!targetOwnerUser) {
+        const err = new Error("Selected owner user account does not exist.");
+        err.statusCode = 400;
+        throw err;
+      }
+
+      // Prevent assigning one owner to multiple incompatible pharmacies
+      const existingAssignment = await Pharmacy.findOne({
+        owner: targetOwnerUser._id,
+        id: { $ne: pharmacy.id },
+      });
+
+      if (existingAssignment) {
+        const err = new Error(
+          `User '${targetOwnerUser.email}' is already assigned as owner of pharmacy '${existingAssignment.name}'.`
+        );
+        err.statusCode = 400;
+        throw err;
+      }
+
+      // Handle safe reassignment: if pharmacy had a different previous owner, reset previous owner
+      if (pharmacy.owner && pharmacy.owner.toString() !== targetOwnerUser._id.toString()) {
+        const prevOwnerUser = await User.findById(pharmacy.owner);
+        if (prevOwnerUser) {
+          const otherPharm = await Pharmacy.exists({ owner: prevOwnerUser._id, id: { $ne: pharmacy.id } });
+          if (!otherPharm) {
+            prevOwnerUser.role = "user";
+            prevOwnerUser.pharmacyId = "";
+            await prevOwnerUser.save();
+          }
+        }
+      }
+
+      // Update new owner user account
+      targetOwnerUser.role = "pharmacy_owner";
+      targetOwnerUser.pharmacyId = pharmacy.id;
+      await targetOwnerUser.save();
+
+      pharmacy.owner = targetOwnerUser._id;
+      pharmacy.ownerId = pharmacy.id;
+    }
+  }
+
+  // 2. Approval Status persistence
+  if (data.approvalStatus) {
+    if (!["pending", "approved", "rejected"].includes(data.approvalStatus)) {
+      const err = new Error("Invalid approval status value.");
+      err.statusCode = 400;
+      throw err;
+    }
+    if (data.approvalStatus === "approved" && pharmacy.approvalStatus !== "approved") {
+      pharmacy.approvedBy = adminUser ? (adminUser._id || adminUser.id) : null;
+      pharmacy.approvedAt = new Date();
+    }
+    pharmacy.approvalStatus = data.approvalStatus;
+  }
+};
+
 // Admin Update Pharmacy
 const updatePharmacy = async (req, res) => {
   try {
     const { id } = req.params;
-    const data = req.body;
+    const data = { ...req.body };
+
+    const mongoose = require("mongoose");
+    const query = mongoose.Types.ObjectId.isValid(id) ? { $or: [{ id }, { _id: id }] } : { id };
+
+    const pharmacy = await Pharmacy.findOne(query);
+    if (!pharmacy) {
+      return res.status(404).json({ success: false, message: "Pharmacy not found." });
+    }
 
     if (data.name) {
       const existing = await Pharmacy.findOne({
-        id: { $ne: id },
+        id: { $ne: pharmacy.id },
+        _id: { $ne: pharmacy._id },
         name: { $regex: new RegExp(`^${data.name.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
       });
       if (existing) {
@@ -185,12 +286,52 @@ const updatePharmacy = async (req, res) => {
       }
     }
 
-    const pharmacy = await Pharmacy.findOneAndUpdate({ id }, data, { new: true, runValidators: true });
-    if (!pharmacy) {
-      return res.status(404).json({ success: false, message: "Pharmacy not found." });
+    // Apply owner assignment and approval status changes
+    await applyOwnerAndApprovalChanges(pharmacy, data, req.user);
+
+    // Update other scalar fields
+    const scalarFields = [
+      "name",
+      "address",
+      "phone",
+      "openingTime",
+      "closingTime",
+      "deliveryFee",
+      "latitude",
+      "longitude",
+      "isOpen",
+      "deliveryAvailable",
+      "isActive",
+      "licenseNumber",
+      "responsiblePharmacist",
+      "logo",
+      "distanceKm",
+      "rating",
+    ];
+
+    for (const field of scalarFields) {
+      if (data[field] !== undefined) {
+        pharmacy[field] = data[field];
+      }
     }
-    res.status(200).json({ success: true, pharmacy, message: "Pharmacy updated successfully." });
+
+    await pharmacy.save();
+
+    const updatedPharmacy = await Pharmacy.findById(pharmacy._id)
+      .populate("owner", "name email role pharmacyId")
+      .lean();
+
+    await logAuditAction(req, "UPDATE_PHARMACY", "PHARMACY", pharmacy.id, {
+      name: pharmacy.name,
+      approvalStatus: pharmacy.approvalStatus,
+      ownerId: pharmacy.ownerId,
+    });
+
+    res.status(200).json({ success: true, pharmacy: updatedPharmacy, message: "Pharmacy updated successfully." });
   } catch (error) {
+    if (error.statusCode === 400) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
     if (error.code === 11000) {
       return res.status(409).json({ success: false, message: "A pharmacy with this unique details already exists." });
     }
@@ -322,32 +463,83 @@ const logAuditAction = async (req, action, entity, entityId = "", details = {}) 
 // Admin List Pharmacies
 const getPharmacies = async (req, res) => {
   try {
-    const pharmacies = await Pharmacy.find().sort({ createdAt: -1 }).lean();
+    const pharmacies = await Pharmacy.find()
+      .populate("owner", "name email role pharmacyId")
+      .sort({ createdAt: -1 })
+      .lean();
     res.status(200).json({ success: true, pharmacies });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to fetch pharmacies" });
   }
 };
 
-// Admin Delete/Soft-Deactivate Pharmacy
+// Admin Permanent Delete Pharmacy (With Dependencies Safeguard)
 const deletePharmacy = async (req, res) => {
   try {
     const { id } = req.params;
-    const pharmacy = await Pharmacy.findOneAndUpdate({ id }, { isActive: false }, { new: true });
+    const mongoose = require("mongoose");
+    const query = mongoose.Types.ObjectId.isValid(id) ? { $or: [{ id }, { _id: id }] } : { id };
+    
+    const pharmacy = await Pharmacy.findOne(query);
     if (!pharmacy) {
       return res.status(404).json({ success: false, message: "Pharmacy not found" });
     }
-    await logAuditAction(req, "DEACTIVATE", "PHARMACY", id, { name: pharmacy.name });
-    res.status(200).json({ success: true, message: "Pharmacy deactivated successfully", pharmacy });
+
+    // Safeguard 1: Check for historical customer orders referencing this pharmacy
+    const hasOrders = await Order.exists({ "pharmacy.id": pharmacy.id });
+    if (hasOrders) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot permanently delete pharmacy "${pharmacy.name}" because historical customer orders exist. Please keep the pharmacy DEACTIVATED instead to preserve customer order history.`,
+      });
+    }
+
+    // Perform safe deletion (Inventory records + Pharmacy record)
+    // Attempt session transaction if replica set/session supported
+    let session = null;
+    try {
+      session = await mongoose.startSession();
+      session.startTransaction();
+      await Inventory.deleteMany({ pharmacyId: pharmacy.id }).session(session);
+      await Pharmacy.deleteOne({ id: pharmacy.id }).session(session);
+      await session.commitTransaction();
+      session.endSession();
+    } catch (txnError) {
+      if (session) {
+        await session.abortTransaction();
+        session.endSession();
+      }
+      // Fallback for standalone MongoDB instances where transactions are not supported
+      await Inventory.deleteMany({ pharmacyId: pharmacy.id });
+      await Pharmacy.deleteOne({ id: pharmacy.id });
+    }
+
+    await logAuditAction(req, "PERMANENT_DELETE", "PHARMACY", pharmacy.id, { name: pharmacy.name });
+    res.status(200).json({
+      success: true,
+      message: `Pharmacy "${pharmacy.name}" and its associated inventory were permanently deleted successfully.`,
+      pharmacyId: pharmacy.id,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to deactivate pharmacy" });
+    console.error("Error in deletePharmacy:", error);
+    res.status(500).json({ success: false, message: error.message || "Failed to delete pharmacy" });
   }
 };
 
 // Admin Get Inventory
 const getInventory = async (req, res) => {
   try {
-    const inventory = await Inventory.find().sort({ updatedAt: -1 }).lean();
+    const { includeInactive } = req.query;
+
+    let inventoryQuery = {};
+    if (includeInactive !== "true") {
+      // Exclude inventory of deactivated or non-existent pharmacies by default
+      const activePharmacies = await Pharmacy.find({ isActive: true }).select("id").lean();
+      const activePharmacyIds = activePharmacies.map((p) => p.id);
+      inventoryQuery = { pharmacyId: { $in: activePharmacyIds } };
+    }
+
+    const inventory = await Inventory.find(inventoryQuery).sort({ updatedAt: -1 }).lean();
 
     // Fetch matching medicine and pharmacy metadata
     const medicineIds = [...new Set(inventory.map((i) => i.medicineId))];
@@ -364,7 +556,7 @@ const getInventory = async (req, res) => {
     const populated = inventory.map((inv) => ({
       ...inv,
       medicine: medMap.get(inv.medicineId) || { name: inv.medicineId },
-      pharmacy: pharmMap.get(inv.pharmacyId) || { name: inv.pharmacyId },
+      pharmacy: pharmMap.get(inv.pharmacyId) || { name: inv.pharmacyId, isActive: false },
     }));
 
     res.status(200).json({ success: true, inventory: populated });
@@ -572,6 +764,125 @@ const getSystemHealth = async (req, res) => {
   }
 };
 
+// Admin Review Pharmacy Application / Assign Owner
+const reviewPharmacyApplication = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { approvalStatus, ownerUserId, licenseNumber, responsiblePharmacist } = req.body;
+
+    const mongoose = require("mongoose");
+    const query = mongoose.Types.ObjectId.isValid(id) ? { $or: [{ id }, { _id: id }] } : { id };
+
+    const pharmacy = await Pharmacy.findOne(query);
+    if (!pharmacy) {
+      return res.status(404).json({ success: false, message: "Pharmacy not found." });
+    }
+
+    if (licenseNumber !== undefined) pharmacy.licenseNumber = licenseNumber.trim();
+    if (responsiblePharmacist !== undefined) pharmacy.responsiblePharmacist = responsiblePharmacist.trim();
+
+    await applyOwnerAndApprovalChanges(pharmacy, { approvalStatus, ownerUserId }, req.user);
+    await pharmacy.save();
+
+    const updatedPharmacy = await Pharmacy.findById(pharmacy._id)
+      .populate("owner", "name email role pharmacyId")
+      .lean();
+
+    await logAuditAction(req, "REVIEW_PHARMACY_APPLICATION", "PHARMACY", pharmacy.id, { approvalStatus, ownerUserId });
+
+    res.status(200).json({ success: true, pharmacy: updatedPharmacy, message: `Pharmacy application updated successfully.` });
+  } catch (error) {
+    if (error.statusCode === 400) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+    console.error("Error in reviewPharmacyApplication:", error);
+    res.status(500).json({ success: false, message: "Failed to review pharmacy application" });
+  }
+};
+
+// Admin Get Medicine Catalog Submissions
+const MedicineSubmission = require("../models/MedicineSubmission");
+const getCatalogSubmissions = async (req, res) => {
+  try {
+    const submissions = await MedicineSubmission.find()
+      .populate("submittedBy", "name email phone")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.status(200).json({ success: true, submissions });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch catalog submissions" });
+  }
+};
+
+// Admin Review Medicine Catalog Submission (Approving adds to central Medicine catalog)
+const reviewCatalogSubmission = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, adminNotes } = req.body;
+
+    if (!["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid status." });
+    }
+
+    const submission = await MedicineSubmission.findById(id);
+    if (!submission) {
+      return res.status(404).json({ success: false, message: "Catalog submission not found." });
+    }
+
+    submission.status = status;
+    submission.adminNotes = adminNotes || "";
+    submission.reviewedBy = req.user._id;
+    submission.reviewedAt = new Date();
+    await submission.save();
+
+    if (status === "approved") {
+      const slug = submission.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const medicineId = `med-${slug}-${Date.now().toString().slice(-4)}`;
+
+      await Medicine.create({
+        id: medicineId,
+        name: submission.name,
+        brand: submission.brand,
+        genericName: submission.genericName || submission.name,
+        category: submission.category,
+        manufacturer: submission.manufacturer || "Generic Manufacturer",
+        price: submission.price,
+        prescriptionRequired: Boolean(submission.prescriptionRequired),
+        otc: !submission.prescriptionRequired,
+        description: submission.description,
+        composition: submission.composition,
+        strength: submission.strength,
+        isActive: true,
+      });
+
+      // Automatically create inventory record for the submitting pharmacy
+      if (submission.pharmacyId) {
+        await Inventory.findOneAndUpdate(
+          { pharmacyId: submission.pharmacyId, medicineId },
+          {
+            $set: {
+              stock: 50,
+              price: submission.price,
+              availability: "in-stock",
+              stockType: "verified",
+              lastVerifiedAt: new Date(),
+              verificationSource: "admin_catalog_approval",
+            },
+          },
+          { upsert: true, new: true }
+        );
+      }
+    }
+
+    await logAuditAction(req, "REVIEW_CATALOG_SUBMISSION", "MEDICINE_SUBMISSION", submission._id, { status });
+    res.status(200).json({ success: true, submission, message: `Catalog submission '${submission.brand}' ${status}.` });
+  } catch (error) {
+    console.error("Error in reviewCatalogSubmission:", error);
+    res.status(500).json({ success: false, message: error.message || "Failed to review catalog submission" });
+  }
+};
+
 module.exports = {
   getOverviewStats,
   getUsers,
@@ -595,4 +906,7 @@ module.exports = {
   updateSettings,
   getAuditLogs,
   getSystemHealth,
+  reviewPharmacyApplication,
+  getCatalogSubmissions,
+  reviewCatalogSubmission,
 };

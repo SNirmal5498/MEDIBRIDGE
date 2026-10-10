@@ -79,6 +79,41 @@ const pharmacySchema = new mongoose.Schema(
       default: true,
       index: true,
     },
+    approvalStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "approved",
+      index: true,
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    approvedAt: {
+      type: Date,
+      default: null,
+    },
+    licenseNumber: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    responsiblePharmacist: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    ownerId: {
+      type: String,
+      default: "",
+      index: true,
+    },
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
   },
   {
     timestamps: true,

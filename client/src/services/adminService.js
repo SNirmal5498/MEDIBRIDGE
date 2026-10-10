@@ -51,8 +51,8 @@ export const adminService = {
     return response.data;
   },
 
-  async getInventory() {
-    const response = await api.get("/admin/inventory");
+  async getInventory(includeInactive = false) {
+    const response = await api.get(`/admin/inventory${includeInactive ? "?includeInactive=true" : ""}`);
     return response.data;
   },
 

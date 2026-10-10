@@ -14,6 +14,11 @@ const prescriptionSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    pharmacyId: {
+      type: String,
+      default: "",
+      index: true,
+    },
     filename: {
       type: String,
       required: true,
@@ -32,11 +37,15 @@ const prescriptionSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
+      enum: ["pending", "under-review", "clarification-required", "reviewed", "rejected", "approved"],
       default: "pending",
       index: true,
     },
     rejectionReason: {
+      type: String,
+      default: "",
+    },
+    reviewNotes: {
       type: String,
       default: "",
     },
@@ -49,6 +58,14 @@ const prescriptionSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    auditHistory: [
+      {
+        status: String,
+        notes: String,
+        updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
   },
   {
     timestamps: true,

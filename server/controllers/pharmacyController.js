@@ -156,7 +156,7 @@ const getPharmacies = async (req, res) => {
     await ensureSeedInventory();
 
     const { search, filter, sort, lat, lng } = req.query;
-    const query = { isActive: true };
+    const query = { isActive: true, approvalStatus: "approved" };
 
     if (search && search.trim()) {
       const regex = new RegExp(search.trim(), "i");
@@ -214,7 +214,7 @@ const getPharmacies = async (req, res) => {
 const getPharmacyById = async (req, res) => {
   try {
     const { id } = req.params;
-    const pharmacy = await Pharmacy.findOne({ id, isActive: true }).lean();
+    const pharmacy = await Pharmacy.findOne({ id, isActive: true, approvalStatus: "approved" }).lean();
 
     if (!pharmacy) {
       return res.status(404).json({
@@ -239,6 +239,14 @@ const getPharmacyById = async (req, res) => {
 const getPharmacyInventory = async (req, res) => {
   try {
     const { id } = req.params;
+    const pharmacy = await Pharmacy.findOne({ id, isActive: true, approvalStatus: "approved" }).lean();
+    if (!pharmacy) {
+      return res.status(404).json({
+        success: false,
+        message: "Pharmacy not found or inactive",
+      });
+    }
+
     const items = await Inventory.find({ pharmacyId: id }).lean();
 
     res.status(200).json({
@@ -269,7 +277,7 @@ const getMedicineAvailability = async (req, res) => {
 
     const inventoryRecords = await Inventory.find({ medicineId, stock: { $gt: 0 } }).lean();
     const pharmacyIds = inventoryRecords.map((inv) => inv.pharmacyId);
-    const pharmacies = await Pharmacy.find({ id: { $in: pharmacyIds }, isActive: true }).lean();
+    const pharmacies = await Pharmacy.find({ id: { $in: pharmacyIds }, isActive: true, approvalStatus: "approved" }).lean();
 
     const userLat = lat ? Number(lat) : null;
     const userLng = lng ? Number(lng) : null;

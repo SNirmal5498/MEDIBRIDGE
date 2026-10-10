@@ -13,7 +13,7 @@ const uploadPrescription = async (req, res) => {
       });
     }
 
-    const { orderId } = req.body;
+    const { orderId, pharmacyId } = req.body;
     let orderDoc = null;
 
     if (orderId) {
@@ -23,17 +23,29 @@ const uploadPrescription = async (req, res) => {
     const prescription = await Prescription.create({
       user: req.user._id,
       order: orderDoc ? orderDoc._id : null,
+      pharmacyId: (pharmacyId || "").trim(),
       filename: req.file.filename,
       filePath: req.file.path,
       fileType: req.file.mimetype,
       fileSize: req.file.size,
       status: "pending",
+      auditHistory: [
+        {
+          status: "pending",
+          notes: "Prescription uploaded by customer",
+          updatedBy: req.user._id,
+          timestamp: new Date(),
+        },
+      ],
     });
+
+    const sanitized = prescription.toObject();
+    delete sanitized.filePath; // Hide internal server path
 
     res.status(201).json({
       success: true,
       message: "Prescription uploaded successfully. Awaiting verification.",
-      prescription,
+      prescription: sanitized,
     });
   } catch (error) {
     console.error("Error in uploadPrescription:", error);
@@ -48,6 +60,7 @@ const uploadPrescription = async (req, res) => {
 const getMyPrescriptions = async (req, res) => {
   try {
     const prescriptions = await Prescription.find({ user: req.user._id })
+      .select("-filePath")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -74,9 +87,23 @@ const getPrescriptionFile = async (req, res) => {
       return res.status(404).json({ success: false, message: "Prescription not found" });
     }
 
-    // Only owner or admin can access prescription file
-    if (prescription.user.toString() !== req.user._id.toString() && req.user.role !== "admin") {
-      return res.status(403).json({ success: false, message: "Access denied" });
+    // Access Authorization check:
+    // 1. Customer who uploaded the prescription
+    // 2. System Admin
+    // 3. Authorized Pharmacy Owner or Staff assigned to this prescription's pharmacyId
+    const isOwnerUser = prescription.user.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === "admin";
+    const isAssignedPharmacyStaff =
+      ["pharmacy_owner", "pharmacy_staff"].includes(req.user.role) &&
+      req.user.pharmacyId &&
+      prescription.pharmacyId &&
+      req.user.pharmacyId === prescription.pharmacyId;
+
+    if (!isOwnerUser && !isAdmin && !isAssignedPharmacyStaff) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You do not have permission to view this prescription document.",
+      });
     }
 
     if (!fs.existsSync(prescription.filePath)) {

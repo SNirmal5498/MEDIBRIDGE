@@ -1,12 +1,17 @@
-import api from "./api";
+import api from "./api.js";
 
 // Client-side in-memory cache map
 const clientCache = new Map();
 
-// Helper hash generator
-function getCacheKey(text, targetLang) {
+// Client-side in-flight request deduplication map
+const clientInFlight = new Map();
+
+// Helper hash generator: includes sourceLang and targetLang
+function getCacheKey(text, targetLang, sourceLang = "en") {
   if (typeof text !== "string") return "";
-  return `${targetLang.toLowerCase()}:${text.trim()}`;
+  const s = (sourceLang || "en").toLowerCase().trim();
+  const t = (targetLang || "en").toLowerCase().trim();
+  return `${s}:${t}:${text.trim()}`;
 }
 
 /**
@@ -17,7 +22,7 @@ export async function translateText(text, targetLang = "en", sourceLang = "en") 
     return text || "";
   }
 
-  const cacheKey = getCacheKey(text, targetLang);
+  const cacheKey = getCacheKey(text, targetLang, sourceLang);
 
   // 1. Check in-memory cache
   if (clientCache.has(cacheKey)) {
@@ -35,30 +40,44 @@ export async function translateText(text, targetLang = "en", sourceLang = "en") 
     // ignore session storage error
   }
 
-  // 3. Call MediBridge Backend Translation Endpoint
-  try {
-    const response = await api.post("/translation/translate", {
-      text: text.trim(),
-      targetLang,
-      sourceLang,
-    });
-
-    if (response.data && response.data.translated) {
-      const result = response.data.translated;
-      clientCache.set(cacheKey, result);
-      try {
-        sessionStorage.setItem(`mb_trans_${cacheKey}`, result);
-      } catch (e) {
-        // ignore storage quota error
-      }
-      return result;
-    }
-  } catch (error) {
-    console.warn("Backend Translation API call failed, falling back to source text:", error.message);
+  // 3. Check in-flight request deduplication
+  if (clientInFlight.has(cacheKey)) {
+    return await clientInFlight.get(cacheKey);
   }
 
-  // Fallback to original text
-  return text;
+  // 4. Call MediBridge Backend Translation Endpoint
+  const requestPromise = (async () => {
+    try {
+      const response = await api.post("/translation/translate", {
+        text: text.trim(),
+        targetLang,
+        sourceLang,
+      });
+
+      if (response.data && response.data.translated) {
+        const result = response.data.translated;
+        // Only cache if valid non-empty translation was returned
+        if (result && (result !== text.trim() || targetLang === "en")) {
+          clientCache.set(cacheKey, result);
+          try {
+            sessionStorage.setItem(`mb_trans_${cacheKey}`, result);
+          } catch (e) {
+            // ignore storage quota error
+          }
+        }
+        return result;
+      }
+    } catch (error) {
+      console.warn("Backend Translation API call failed, falling back to source text:", error.message);
+    } finally {
+      clientInFlight.delete(cacheKey);
+    }
+
+    return text;
+  })();
+
+  clientInFlight.set(cacheKey, requestPromise);
+  return await requestPromise;
 }
 
 /**
@@ -87,29 +106,51 @@ export async function translateTexts(texts, targetLang = "en", sourceLang = "en"
 }
 
 /**
- * Translate an object's dynamic fields
+ * Translate an object's dynamic fields with object-level caching
  */
 export async function translateObject(object, fields, targetLang = "en", sourceLang = "en") {
   if (!object || typeof object !== "object" || targetLang === "en" || !Array.isArray(fields)) {
     return object;
   }
 
-  try {
-    const response = await api.post("/translation/object", {
-      object,
-      fields,
-      targetLang,
-      sourceLang,
-    });
+  const objId = object.id || object._id || object.brand || object.name || "";
+  const objectCacheKey = `obj:${sourceLang.toLowerCase()}:${targetLang.toLowerCase()}:${objId}:${JSON.stringify(fields)}`;
 
-    if (response.data && response.data.translatedObject) {
-      return response.data.translatedObject;
-    }
-  } catch (error) {
-    console.warn("Backend Translate Object API call failed:", error.message);
+  if (clientCache.has(objectCacheKey)) {
+    return clientCache.get(objectCacheKey);
   }
 
-  return object;
+  if (clientInFlight.has(objectCacheKey)) {
+    return await clientInFlight.get(objectCacheKey);
+  }
+
+  const requestPromise = (async () => {
+    try {
+      const response = await api.post("/translation/object", {
+        object,
+        fields,
+        targetLang,
+        sourceLang,
+      });
+
+      if (response.data && response.data.translatedObject) {
+        const result = response.data.translatedObject;
+        if (response.data.success && !response.data.fallback) {
+          clientCache.set(objectCacheKey, result);
+        }
+        return result;
+      }
+    } catch (error) {
+      console.warn("Backend Translate Object API call failed:", error.message);
+    } finally {
+      clientInFlight.delete(objectCacheKey);
+    }
+
+    return object;
+  })();
+
+  clientInFlight.set(objectCacheKey, requestPromise);
+  return await requestPromise;
 }
 
 /**
@@ -127,6 +168,8 @@ export async function translateMedicine(medicine, targetLang = "en") {
     "manufacturer",
     "dosageForm",
     "form",
+    "strength",
+    "packSize",
     "category",
     "shortDescription",
     "description",

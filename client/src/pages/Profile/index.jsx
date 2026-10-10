@@ -17,7 +17,6 @@ import { getFavoriteMedicines, toggleFavorite } from "../../utils/medicineData";
 import {
   getSavedPharmacies,
   getSavedPharmacyIds,
-  NEARBY_PHARMACIES,
   setSavedPharmacyIds,
 } from "../../utils/pharmacyData";
 
@@ -57,7 +56,7 @@ export default function Profile() {
   }
 
   function handleRemovePharmacy(id) {
-    const current = getSavedPharmacyIds() ?? NEARBY_PHARMACIES.slice(0, 3).map((p) => p.id);
+    const current = getSavedPharmacyIds() ?? [];
     const next = current.filter((x) => x !== id);
     setSavedPharmacyIds(next);
     setPharmacies(getSavedPharmacies());

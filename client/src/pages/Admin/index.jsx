@@ -52,6 +52,10 @@ const DEFAULT_PHARMACY_FORM = {
   isActive: true,
   logo: "",
   distanceKm: 1.0,
+  approvalStatus: "approved",
+  ownerUserId: "",
+  licenseNumber: "",
+  responsiblePharmacist: "",
 };
 
 export default function Admin({ tab }) {
@@ -89,11 +93,18 @@ export default function Admin({ tab }) {
   const [medicineModalOpen, setMedicineModalOpen] = useState(false);
   const [pharmacyModalOpen, setPharmacyModalOpen] = useState(false);
 
+  // Pharmacy Deletion Modal State
+  const [deletePharmacyModalOpen, setDeletePharmacyModalOpen] = useState(false);
+  const [pharmacyToDelete, setPharmacyToDelete] = useState(null);
+  const [isDeletingPharmacy, setIsDeletingPharmacy] = useState(false);
+  const [deletePharmacyError, setDeletePharmacyError] = useState("");
+
   // Inventory Modal & Filter States
   const [inventoryModalOpen, setInventoryModalOpen] = useState(false);
   const [selectedHistoryModal, setSelectedHistoryModal] = useState(null);
   const [inventorySearchQuery, setInventorySearchQuery] = useState("");
   const [inventoryFilterStatus, setInventoryFilterStatus] = useState("all");
+  const [showInactiveInventory, setShowInactiveInventory] = useState(false);
   const [inventoryFormData, setInventoryFormData] = useState({
     pharmacyId: "",
     medicineId: "",
@@ -294,7 +305,13 @@ export default function Admin({ tab }) {
 
   const handleOpenAddPharmacy = () => {
     setEditingPharmacy(null);
-    setPharmacyFormData(DEFAULT_PHARMACY_FORM);
+    setPharmacyFormData({
+      ...DEFAULT_PHARMACY_FORM,
+      approvalStatus: "approved",
+      ownerUserId: "",
+      licenseNumber: "",
+      responsiblePharmacist: "",
+    });
     setPharmacyFormErrors({});
     setPharmacySubmitError("");
     setPharmacyModalOpen(true);
@@ -318,6 +335,14 @@ export default function Admin({ tab }) {
       }
     }
 
+    let ownerUserId = "";
+    if (pharmacy.owner) {
+      ownerUserId = typeof pharmacy.owner === "object" ? pharmacy.owner._id : pharmacy.owner;
+    } else if (pharmacy.ownerId) {
+      const matchedUser = usersList.find((u) => u.pharmacyId === pharmacy.id || u.pharmacyId === pharmacy._id);
+      if (matchedUser) ownerUserId = matchedUser._id;
+    }
+
     setPharmacyFormData({
       id: pharmacy.id || "",
       name: pharmacy.name || "",
@@ -335,6 +360,10 @@ export default function Admin({ tab }) {
       isActive: pharmacy.isActive !== false,
       logo: pharmacy.logo || "",
       distanceKm: pharmacy.distanceKm ?? 1.0,
+      approvalStatus: pharmacy.approvalStatus || "approved",
+      ownerUserId: ownerUserId || "",
+      licenseNumber: pharmacy.licenseNumber || "",
+      responsiblePharmacist: pharmacy.responsiblePharmacist || "",
     });
     setPharmacyFormErrors({});
     setPharmacySubmitError("");
@@ -397,12 +426,16 @@ export default function Admin({ tab }) {
       isActive: Boolean(pharmacyFormData.isActive),
       logo: pharmacyFormData.logo.trim(),
       distanceKm: Number(pharmacyFormData.distanceKm) || 1.0,
+      approvalStatus: pharmacyFormData.approvalStatus || "approved",
+      ownerUserId: pharmacyFormData.ownerUserId || "",
+      licenseNumber: pharmacyFormData.licenseNumber ? pharmacyFormData.licenseNumber.trim() : "",
+      responsiblePharmacist: pharmacyFormData.responsiblePharmacist ? pharmacyFormData.responsiblePharmacist.trim() : "",
     };
 
     try {
       let res;
       if (editingPharmacy) {
-        res = await adminService.updatePharmacy(editingPharmacy.id, payload);
+        res = await adminService.updatePharmacy(editingPharmacy.id || editingPharmacy._id, payload);
       } else {
         res = await adminService.addPharmacy(payload);
       }
@@ -419,6 +452,10 @@ export default function Admin({ tab }) {
           setStats((prev) => (prev ? { ...prev, totalPharmacies: (prev.totalPharmacies || 0) + 1 } : prev));
           setToastMessage({ type: "success", text: "Pharmacy added successfully." });
         }
+        // Refresh users list so assigned roles/pharmacyIds update immediately in UI
+        adminService.getUsers().then((uRes) => {
+          if (uRes?.users) setUsersList(uRes.users);
+        });
         setTimeout(() => setToastMessage(null), 4000);
         setPharmacyModalOpen(false);
         setEditingPharmacy(null);
@@ -508,18 +545,80 @@ export default function Admin({ tab }) {
     }
   };
 
-  const handleDeletePharmacy = async (pharmacyId) => {
-    if (!window.confirm("Are you sure you want to deactivate this partner pharmacy?")) return;
+  const handleTogglePharmacyStatus = async (pharmacy) => {
     try {
-      const res = await adminService.deletePharmacy(pharmacyId);
-      if (res?.success) {
-        setPharmacies((prev) => prev.map((p) => (p.id === pharmacyId ? { ...p, isActive: false } : p)));
-        setToastMessage({ type: "success", text: "Partner pharmacy deactivated successfully" });
+      const newActiveState = !(pharmacy.isActive !== false);
+      const res = await adminService.updatePharmacy(pharmacy.id, { isActive: newActiveState });
+      if (res?.success && res.pharmacy) {
+        setPharmacies((prev) =>
+          prev.map((p) => (p.id === pharmacy.id || p._id === pharmacy._id ? res.pharmacy : p))
+        );
+        setToastMessage({
+          type: "success",
+          text: `Pharmacy "${pharmacy.name}" ${newActiveState ? "activated" : "deactivated"} successfully.`,
+        });
+        setTimeout(() => setToastMessage(null), 3000);
+        // Refresh inventory to reflect changes in active inventory view
+        const invRes = await adminService.getInventory(showInactiveInventory);
+        if (invRes?.inventory) setInventoryList(invRes.inventory);
+      } else {
+        setToastMessage({ type: "error", text: res?.message || "Failed to update pharmacy status" });
         setTimeout(() => setToastMessage(null), 3000);
       }
     } catch (err) {
-      setToastMessage({ type: "error", text: "Failed to deactivate pharmacy" });
+      setToastMessage({
+        type: "error",
+        text: err?.response?.data?.message || "Failed to update pharmacy status",
+      });
       setTimeout(() => setToastMessage(null), 3000);
+    }
+  };
+
+  const handlePromptDeletePharmacy = (pharmacy) => {
+    setPharmacyToDelete(pharmacy);
+    setDeletePharmacyError("");
+    setDeletePharmacyModalOpen(true);
+  };
+
+  const handleConfirmDeletePharmacy = async () => {
+    if (!pharmacyToDelete) return;
+    setIsDeletingPharmacy(true);
+    setDeletePharmacyError("");
+
+    try {
+      const res = await adminService.deletePharmacy(pharmacyToDelete.id);
+      if (res?.success) {
+        const deletedId = pharmacyToDelete.id;
+        setPharmacies((prev) =>
+          prev.filter((p) => p.id !== deletedId && p._id !== pharmacyToDelete._id)
+        );
+        setToastMessage({
+          type: "success",
+          text: res.message || `Pharmacy "${pharmacyToDelete.name}" permanently deleted successfully.`,
+        });
+        setTimeout(() => setToastMessage(null), 4000);
+        setDeletePharmacyModalOpen(false);
+        setPharmacyToDelete(null);
+        loadDashboardData();
+      } else {
+        setDeletePharmacyError(res?.message || "Failed to delete pharmacy.");
+      }
+    } catch (err) {
+      const errMsg = err?.response?.data?.message || err?.message || "Failed to delete pharmacy.";
+      setDeletePharmacyError(errMsg);
+    } finally {
+      setIsDeletingPharmacy(false);
+    }
+  };
+
+  const handleToggleInactiveInventory = async () => {
+    const nextVal = !showInactiveInventory;
+    setShowInactiveInventory(nextVal);
+    try {
+      const res = await adminService.getInventory(nextVal);
+      if (res?.inventory) setInventoryList(res.inventory);
+    } catch (err) {
+      console.error("Failed to load inventory:", err);
     }
   };
 
@@ -1119,11 +1218,20 @@ export default function Admin({ tab }) {
                       <Button variant="secondary" size="sm" onClick={() => handleOpenEditPharmacy(p)}>
                         Edit
                       </Button>
-                      {p.isActive !== false && (
-                        <Button variant="danger" size="sm" onClick={() => handleDeletePharmacy(p.id)}>
-                          Deactivate
-                        </Button>
-                      )}
+                      <Button
+                        variant={p.isActive !== false ? "secondary" : "primary"}
+                        size="sm"
+                        onClick={() => handleTogglePharmacyStatus(p)}
+                      >
+                        {p.isActive !== false ? "Deactivate" : "Activate"}
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handlePromptDeletePharmacy(p)}
+                      >
+                        Delete
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -1191,7 +1299,7 @@ export default function Admin({ tab }) {
               <div>
                 <h3 className="font-extrabold text-slate-900 text-base">Pharmacy Inventory & Live Stock Control</h3>
                 <p className="text-xs text-slate-500">
-                  Live Stock (Pharmacy &rarr; Medicine &rarr; Stock). Edits persist to MongoDB Atlas and sync to customer storefront.
+                  Live Stock (Pharmacy &rarr; Medicine &rarr; Stock). Operational inventory excludes deactivated pharmacies by default.
                 </p>
               </div>
               <Button variant="primary" size="sm" icon={Plus} onClick={() => handleOpenAddInventory()}>
@@ -1212,8 +1320,19 @@ export default function Admin({ tab }) {
                 />
               </div>
 
-              {/* Filter Tabs */}
+              {/* Filter Tabs & Inactive Toggle */}
               <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
+                <button
+                  onClick={handleToggleInactiveInventory}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors border ${
+                    showInactiveInventory
+                      ? "bg-amber-100 border-amber-300 text-amber-900 font-bold"
+                      : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+                  }`}
+                  title="Toggle inspection of stock for deactivated pharmacies"
+                >
+                  {showInactiveInventory ? "Showing All (Inc. Inactive)" : "Active Pharmacies Only"}
+                </button>
                 {["all", "low-stock", "out-of-stock", "sample"].map((statusKey) => (
                   <button
                     key={statusKey}
@@ -2489,6 +2608,132 @@ export default function Admin({ tab }) {
                   Active Status
                 </label>
               </div>
+
+              {/* Ownership & Approval Section */}
+              <div className="pt-4 border-t border-slate-200 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <User className="w-4 h-4 text-teal-600" />
+                    Ownership & Approval
+                  </h4>
+                  <span
+                    className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider ${
+                      pharmacyFormData.approvalStatus === "approved"
+                        ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                        : pharmacyFormData.approvalStatus === "rejected"
+                        ? "bg-rose-100 text-rose-800 border border-rose-200"
+                        : "bg-amber-100 text-amber-800 border border-amber-200"
+                    }`}
+                  >
+                    {pharmacyFormData.approvalStatus || "pending"}
+                  </span>
+                </div>
+
+                {/* License Number & Responsible Pharmacist */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700">License Number</label>
+                    <input
+                      type="text"
+                      value={pharmacyFormData.licenseNumber || ""}
+                      onChange={(e) => setPharmacyFormData({ ...pharmacyFormData, licenseNumber: e.target.value })}
+                      placeholder="e.g. TN-CBE-2024-8849"
+                      className="w-full mt-1 p-2.5 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-teal-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-700">Responsible Pharmacist</label>
+                    <input
+                      type="text"
+                      value={pharmacyFormData.responsiblePharmacist || ""}
+                      onChange={(e) => setPharmacyFormData({ ...pharmacyFormData, responsiblePharmacist: e.target.value })}
+                      placeholder="e.g. Dr. K. Rajesh, B.Pharm"
+                      className="w-full mt-1 p-2.5 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-teal-500 outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Assigned Owner Dropdown & Account Status */}
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">
+                      Assigned Pharmacy Owner
+                    </label>
+                    <select
+                      value={pharmacyFormData.ownerUserId || ""}
+                      onChange={(e) => setPharmacyFormData({ ...pharmacyFormData, ownerUserId: e.target.value })}
+                      className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-teal-500 outline-none bg-white"
+                    >
+                      <option value="">-- No Assigned Owner (Unassigned) --</option>
+                      {usersList.map((u) => (
+                        <option key={u._id} value={u._id}>
+                          {u.name} ({u.email}) — [{u.role}]
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Owner Account Status Display */}
+                  {(() => {
+                    const selOwner = usersList.find((u) => u._id === pharmacyFormData.ownerUserId);
+                    return selOwner ? (
+                      <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                        <div>
+                          <p className="font-extrabold text-slate-900">{selOwner.name}</p>
+                          <p className="text-slate-500 text-[11px] mt-0.5">{selOwner.email}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-teal-50 text-teal-700 border border-teal-200 uppercase">
+                            Role: {selOwner.role}
+                          </span>
+                          <p className="text-[10px] text-slate-400 mt-0.5">Account: {selOwner.accountStatus || "active"}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-slate-400 italic">No owner user account assigned to this pharmacy.</p>
+                    );
+                  })()}
+                </div>
+
+                {/* Approval Status & Actions */}
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-700">Approval Status</label>
+                    <select
+                      value={pharmacyFormData.approvalStatus}
+                      onChange={(e) => setPharmacyFormData({ ...pharmacyFormData, approvalStatus: e.target.value })}
+                      className="p-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:ring-2 focus:ring-teal-500 outline-none"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <Button
+                      type="button"
+                      variant={pharmacyFormData.approvalStatus === "approved" ? "primary" : "secondary"}
+                      size="sm"
+                      onClick={() => setPharmacyFormData({ ...pharmacyFormData, approvalStatus: "approved" })}
+                      className="flex-1 text-xs py-1.5 justify-center"
+                    >
+                      <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                      Approve Pharmacy
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={pharmacyFormData.approvalStatus === "rejected" ? "danger" : "secondary"}
+                      size="sm"
+                      onClick={() => setPharmacyFormData({ ...pharmacyFormData, approvalStatus: "rejected" })}
+                      className="flex-1 text-xs py-1.5 justify-center"
+                    >
+                      <XCircle className="w-3.5 h-3.5 mr-1" />
+                      Reject Application
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Modal Actions */}
@@ -2752,6 +2997,81 @@ export default function Admin({ tab }) {
               <Button variant="secondary" size="sm" onClick={() => setSelectedHistoryModal(null)}>
                 Close
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Pharmacy Confirmation Modal */}
+      {deletePharmacyModalOpen && pharmacyToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-rose-50/60">
+              <div className="flex items-center gap-2 text-rose-700">
+                <AlertTriangle className="w-5 h-5 shrink-0" />
+                <h3 className="font-extrabold text-slate-900 text-sm">Confirm Permanent Deletion</h3>
+              </div>
+              <button
+                onClick={() => {
+                  if (!isDeletingPharmacy) {
+                    setDeletePharmacyModalOpen(false);
+                    setPharmacyToDelete(null);
+                  }
+                }}
+                className="text-slate-400 hover:text-slate-600 font-bold p-1 text-lg"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-slate-700 leading-relaxed">
+                Are you sure you want to permanently delete pharmacy{" "}
+                <span className="font-extrabold text-slate-900">{pharmacyToDelete.name}</span>?
+              </p>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-800 space-y-1">
+                <p className="font-bold">⚠️ Warning:</p>
+                <p>
+                  This operation cannot be undone. Permanent deletion removes the partner pharmacy and its associated stock records.
+                  If historical customer orders exist, permanent deletion will be blocked to preserve customer order history.
+                </p>
+              </div>
+
+              {deletePharmacyError && (
+                <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-[11px] text-rose-700 font-semibold leading-relaxed">
+                  {deletePharmacyError}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={isDeletingPharmacy}
+                  onClick={() => {
+                    setDeletePharmacyModalOpen(false);
+                    setPharmacyToDelete(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  disabled={isDeletingPharmacy}
+                  onClick={handleConfirmDeletePharmacy}
+                >
+                  {isDeletingPharmacy ? (
+                    <span className="flex items-center gap-1.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Deleting...
+                    </span>
+                  ) : (
+                    "Delete Permanently"
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

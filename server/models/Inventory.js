@@ -50,6 +50,15 @@ const inventorySchema = new mongoose.Schema(
       default: 10,
       min: 0,
     },
+    batchNumber: {
+      type: String,
+      default: "BATCH-DEFAULT",
+      trim: true,
+    },
+    expiryDate: {
+      type: Date,
+      default: null,
+    },
     adjustmentHistory: [
       {
         date: { type: Date, default: Date.now },

@@ -14,6 +14,8 @@ function serializeUser(user) {
         preferredLanguage: user.preferredLanguage,
         profilePicture: user.profilePicture || "",
         role: user.role,
+        pharmacyId: user.pharmacyId || "",
+        staffPermissions: user.staffPermissions || [],
         accountStatus: user.accountStatus || "active",
         emailVerified: Boolean(user.emailVerified),
         lastLogin: user.lastLogin || null,

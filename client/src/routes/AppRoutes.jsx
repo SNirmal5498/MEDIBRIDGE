@@ -20,6 +20,8 @@ import Pharmacy from "../pages/Pharmacy";
 import Emergency from "../pages/Emergency";
 import NotFound from "../pages/NotFound";
 
+import PharmacyOwner from "../pages/PharmacyOwner";
+
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="p-10 text-center text-text-muted">Loading...</div>;
@@ -32,6 +34,14 @@ function AdminRoute({ children }) {
   if (loading) return <div className="p-10 text-center text-text-muted">Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== "admin") return <Navigate to="/" replace />;
+  return children;
+}
+
+function PharmacyOwnerRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="p-10 text-center text-text-muted">Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!["admin", "pharmacy_owner", "pharmacy_staff"].includes(user.role)) return <Navigate to="/" replace />;
   return children;
 }
 
@@ -51,6 +61,16 @@ export default function AppRoutes() {
         <Route path="/compare" element={<Compare />} />
         <Route path="/pharmacy" element={<Pharmacy />} />
         <Route path="/emergency" element={<Emergency />} />
+
+        {/* Pharmacy Owner Portal */}
+        <Route
+          path="/pharmacy-owner"
+          element={
+            <PharmacyOwnerRoute>
+              <PharmacyOwner />
+            </PharmacyOwnerRoute>
+          }
+        />
 
         {/* User Protected Routes */}
         <Route
