@@ -13,15 +13,24 @@ import { useDynamicTranslation } from "./useDynamicTranslation";
 
 function pickLocalizedField(dynamicVal, staticVal, rawVal, langCode) {
   if (langCode === "en") return rawVal || "";
+
+  // 1. If backend already provided translated text in target script
+  if (rawVal && typeof rawVal === "string" && /[^\x00-\x7F]/.test(rawVal)) {
+    return rawVal;
+  }
+
+  // 2. Prefer dynamic translation if it contains target non-ASCII script
   if (dynamicVal && typeof dynamicVal === "string" && dynamicVal.trim()) {
-    // Prefer dynamic translation if it contains non-ASCII target script or differs from raw English
     if (/[^\x00-\x7F]/.test(dynamicVal) || dynamicVal.trim() !== String(rawVal).trim()) {
       return dynamicVal;
     }
   }
+
+  // 3. Use static dictionary translation
   if (staticVal && typeof staticVal === "string" && staticVal.trim()) {
     return staticVal;
   }
+
   return rawVal || "";
 }
 
@@ -33,7 +42,7 @@ export function useMedicineCardLocalization(medicine) {
   const { language, t } = useLanguage();
   const langCode = language?.code || "en";
 
-  // Dynamic translation call for API medicine objects
+  // Dynamic translation call for API medicine objects (background enhancement)
   const { data: dynamicMed, loading: dynamicLoading } = useDynamicTranslation(medicine, "medicine");
 
   const localized = useMemo(() => {
@@ -41,12 +50,13 @@ export function useMedicineCardLocalization(medicine) {
       return { loading: false, isOtc: true, otcLabel: t("medicine.otc") };
     }
 
-    const isPending = langCode !== "en" && dynamicLoading;
+    const medId = medicine.id || medicine._id || "";
+    const isOtc = medicine.otc === true || medicine.prescriptionRequired === false;
+    const otcLabel = isOtc ? t("medicine.otc") : t("medicine.prescriptionRequired");
 
     if (langCode === "en") {
-      const isOtc = medicine.otc === true || medicine.prescriptionRequired === false;
       return {
-        id: medicine.id || medicine._id,
+        id: medId,
         brand: medicine.brand || medicine.name || "",
         genericName: medicine.genericName || medicine.composition || "",
         category: medicine.category || "",
@@ -57,7 +67,7 @@ export function useMedicineCardLocalization(medicine) {
         description: medicine.description || medicine.shortDescription || "",
         uses: medicine.uses || [],
         isOtc,
-        otcLabel: isOtc ? t("medicine.otc") : t("medicine.prescriptionRequired"),
+        otcLabel,
         price: medicine.price,
         rating: medicine.rating,
         badges: medicine.badges,
@@ -102,16 +112,18 @@ export function useMedicineCardLocalization(medicine) {
       ? dynamicMed.uses
       : (medicine.uses || []);
 
-    const isOtc =
+    const resolvedOtc =
       medicine.otc === true ||
       medicine.prescriptionRequired === false ||
       dynamicMed?.otc === true ||
       dynamicMed?.prescriptionRequired === false;
 
-    const otcLabel = isOtc ? t("medicine.otc") : t("medicine.prescriptionRequired");
+    // A card is only "loading" if we literally have no brand or generic name ready yet
+    const hasData = Boolean(brand || genericName || rawBrand);
+    const isPending = !hasData && dynamicLoading;
 
     return {
-      id: medicine.id || medicine._id || dynamicMed?.id || dynamicMed?._id,
+      id: medId || dynamicMed?.id || dynamicMed?._id,
       brand,
       genericName,
       category,
@@ -121,8 +133,8 @@ export function useMedicineCardLocalization(medicine) {
       packSize,
       description,
       uses,
-      isOtc,
-      otcLabel,
+      isOtc: resolvedOtc,
+      otcLabel: resolvedOtc ? t("medicine.otc") : t("medicine.prescriptionRequired"),
       price: medicine.price ?? dynamicMed?.price,
       rating: medicine.rating ?? dynamicMed?.rating,
       badges: medicine.badges || dynamicMed?.badges,

@@ -42,7 +42,7 @@ export default function Hero() {
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button as="a" href="/medicine" onClick={(e) => { e.preventDefault(); navigate("/medicine"); }} variant="secondary" icon={Scale} size="lg">
+            <Button as="a" href="/compare" onClick={(e) => { e.preventDefault(); navigate("/compare"); }} variant="secondary" icon={Scale} size="lg">
               {t("hero.compareMedicines")}
             </Button>
             <Button

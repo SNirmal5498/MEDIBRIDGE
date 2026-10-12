@@ -58,8 +58,12 @@ export default function AppRoutes() {
         {/* Main Features */}
         <Route path="/medicine" element={<Medicine />} />
         <Route path="/medicine/:id" element={<MedicineDetails />} />
+        <Route path="/medicines" element={<Navigate to="/medicine" replace />} />
+        <Route path="/medicines/:id" element={<MedicineDetails />} />
         <Route path="/compare" element={<Compare />} />
+        <Route path="/compare-medicines" element={<Navigate to="/compare" replace />} />
         <Route path="/pharmacy" element={<Pharmacy />} />
+        <Route path="/pharmacies" element={<Navigate to="/pharmacy" replace />} />
         <Route path="/emergency" element={<Emergency />} />
 
         {/* Pharmacy Owner Portal */}

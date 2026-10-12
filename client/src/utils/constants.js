@@ -3,7 +3,7 @@
 
 export const NAV_LINKS = [
   { labelKey: "nav.home", path: "/", icon: "Home" },
-  { labelKey: "nav.compareMedicines", path: "/medicine", icon: "Scale" },
+  { labelKey: "nav.compareMedicines", path: "/compare", icon: "Scale" },
   { labelKey: "nav.nearbyPharmacy", path: "/pharmacy", icon: "MapPin" },
   { labelKey: "nav.emergency", path: "/emergency", icon: "Siren" },
 ];

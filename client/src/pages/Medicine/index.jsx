@@ -13,7 +13,8 @@ const ITEMS_PER_PAGE = 12;
 export default function Medicine() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const langCode = language?.code || "en";
 
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [debouncedQuery, setDebouncedQuery] = useState(query);
@@ -33,6 +34,7 @@ export default function Medicine() {
     totalPages: 1,
   });
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [popularMedicines, setPopularMedicines] = useState([]);
 
   // Debounce search input
@@ -65,6 +67,7 @@ export default function Medicine() {
   // Fetch medicines from backend API
   const fetchMedicines = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const response = await medicineService.search({
         q: debouncedQuery,
@@ -73,11 +76,8 @@ export default function Medicine() {
         category,
         page,
         limit: ITEMS_PER_PAGE,
+        lang: langCode,
       });
-
-      console.log("API response:", response);
-      console.log("Medicines received:", response.medicines);
-      console.log("Medicine count:", response.medicines?.length);
 
       if (response && Array.isArray(response.medicines)) {
         setMedicines(response.medicines);
@@ -87,6 +87,7 @@ export default function Medicine() {
       }
     } catch (err) {
       console.warn("Backend API unavailable, falling back to local dataset:", err);
+      setFetchError(err.message || "Failed to load catalog");
       // Fallback to local filtering
       let list = getAllMedicines();
       if (debouncedQuery.trim()) {
@@ -116,7 +117,7 @@ export default function Medicine() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedQuery, filter, sort, category, page]);
+  }, [debouncedQuery, filter, sort, category, page, langCode]);
 
   useEffect(() => {
     fetchMedicines();
@@ -127,7 +128,7 @@ export default function Medicine() {
     let isMounted = true;
     async function loadPopular() {
       try {
-        const res = await medicineService.getPopular(4);
+        const res = await medicineService.getPopular(4, langCode);
         if (isMounted && res && Array.isArray(res.medicines) && res.medicines.length > 0) {
           setPopularMedicines(res.medicines);
           return;
@@ -143,7 +144,7 @@ export default function Medicine() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [langCode]);
 
   function toggleCompare(id) {
     setCompareIds((prev) => {
@@ -212,6 +213,14 @@ export default function Medicine() {
             <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
             <p className="text-sm">{t("medicine.loading")}</p>
           </div>
+        ) : fetchError && medicines.length === 0 ? (
+          <div className="text-center py-16 card border border-danger/20 bg-danger-50/20">
+            <p className="text-danger font-semibold text-base">{t("common.error") || "Failed to load medicines"}</p>
+            <p className="text-text-muted text-sm mt-1">{fetchError}</p>
+            <Button variant="primary" size="sm" className="mt-4 mx-auto" onClick={() => fetchMedicines()}>
+              {t("common.retry") || "Retry"}
+            </Button>
+          </div>
         ) : medicines.length === 0 ? (
           <div className="text-center py-16 card">
             <p className="text-text font-semibold text-base">{t("medicine.noMedicines")}</p>
@@ -220,15 +229,18 @@ export default function Medicine() {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {medicines.map((m) => (
-                <MedicineCard
-                  key={m.id}
-                  medicine={m}
-                  compareSelected={compareIds.includes(m.id)}
-                  compareDisabled={compareIds.length >= 2}
-                  onToggleCompare={toggleCompare}
-                />
-              ))}
+              {medicines.map((m) => {
+                const medId = m.id || m._id;
+                return (
+                  <MedicineCard
+                    key={medId}
+                    medicine={m}
+                    compareSelected={compareIds.includes(medId)}
+                    compareDisabled={compareIds.length >= 2}
+                    onToggleCompare={toggleCompare}
+                  />
+                );
+              })}
             </div>
 
             {/* Pagination Controls */}

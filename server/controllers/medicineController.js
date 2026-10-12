@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Medicine = require("../models/Medicine");
-const { translateMedicine } = require("../utils/translator");
+const { translateMedicine, translateMedicineSummary } = require("../utils/translator");
 
 // Helper to sanitize regex input
 function escapeRegex(text) {
@@ -10,7 +10,7 @@ function escapeRegex(text) {
 const getMedicines = async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const limit = Math.min(2000, Math.max(1, parseInt(req.query.limit, 10) || 20));
     const skip = (page - 1) * limit;
 
     const {
@@ -20,6 +20,7 @@ const getMedicines = async (req, res) => {
       filter,
       sort,
       manufacturer,
+      fields,
     } = req.query;
 
     const searchTerm = (q || search || "").trim();
@@ -39,9 +40,22 @@ const getMedicines = async (req, res) => {
       ];
     }
 
-    // Category filter
+    // Category filter: match exact or combined categories (e.g. "Fever" matches "Fever & Pain Relief")
     if (category && category !== "all") {
-      query.category = category;
+      const safeCat = escapeRegex(category);
+      const catRegex = new RegExp(`(^|&|\\band\\b|/)\\s*${safeCat}\\s*($|&|\\band\\b|/)|^${safeCat}$`, "i");
+      if (query.$or) {
+        query.$and = [
+          { $or: query.$or },
+          { $or: [{ category: catRegex }, { category: new RegExp(`^${safeCat}`, "i") }] }
+        ];
+        delete query.$or;
+      } else {
+        query.$or = [
+          { category: catRegex },
+          { category: new RegExp(`^${safeCat}`, "i") }
+        ];
+      }
     }
 
     // OTC / Prescription filter
@@ -68,8 +82,19 @@ const getMedicines = async (req, res) => {
       sortObj = { rating: -1, popularity: -1 };
     }
 
+    let projection = null;
+    if (fields) {
+      projection = {};
+      fields.split(",").forEach((f) => {
+        const trimmed = f.trim();
+        if (trimmed) projection[trimmed] = 1;
+      });
+      projection._id = 1;
+      projection.id = 1;
+    }
+
     const [medicines, total] = await Promise.all([
-      Medicine.find(query).sort(sortObj).skip(skip).limit(limit).lean(),
+      Medicine.find(query, projection).sort(sortObj).skip(skip).limit(limit).lean(),
       Medicine.countDocuments(query),
     ]);
 
@@ -78,7 +103,7 @@ const getMedicines = async (req, res) => {
     const lang = (req.query.lang || "en").toLowerCase();
     let finalMedicines = medicines;
     if (lang !== "en") {
-      finalMedicines = await Promise.all(medicines.map((m) => translateMedicine(m, lang)));
+      finalMedicines = await Promise.all(medicines.map((m) => translateMedicineSummary(m, lang)));
     }
 
     res.status(200).json({

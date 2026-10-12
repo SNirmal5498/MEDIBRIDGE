@@ -11,10 +11,14 @@ const connectDB = async () => {
           serverSelectionTimeoutMS: 4000,
           family: 4,
         });
+        await mongoose.connection.db.admin().ping();
         console.log("✅ MongoDB Connected via Atlas Cloud Cluster");
         return;
       } catch (err) {
         console.warn("⚠️ Atlas MongoDB connection failed, attempting local fallback:", err.message);
+        try {
+          await mongoose.disconnect();
+        } catch (_) {}
       }
     }
 

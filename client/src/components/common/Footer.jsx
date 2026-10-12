@@ -53,7 +53,7 @@ export default function Footer() {
 
             <div className="flex flex-col gap-3 text-gray-300">
               <Link to="/">{t("nav.home")}</Link>
-              <Link to="/medicine">{t("nav.compareMedicines")}</Link>
+              <Link to="/compare">{t("nav.compareMedicines")}</Link>
               <Link to="/pharmacy">{t("nav.nearbyPharmacy")}</Link>
               <Link to="/emergency">{t("nav.emergency")}</Link>
             </div>

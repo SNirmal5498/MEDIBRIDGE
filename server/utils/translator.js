@@ -243,6 +243,19 @@ async function translateArray(arr, targetLang = "en", sourceLang = "en") {
   return Promise.all(arr.map((item) => (typeof item === "string" ? translateText(item, targetLang, sourceLang) : item)));
 }
 
+function fixMojibake(str) {
+  if (!str || typeof str !== "string") return str;
+  if (/[\u00C0-\u00FF][\u0080-\u00BF]/.test(str)) {
+    try {
+      const fixed = Buffer.from(str, "latin1").toString("utf8");
+      if (fixed && !fixed.includes("")) return fixed;
+    } catch (e) {
+      // ignore
+    }
+  }
+  return str;
+}
+
 /**
  * Translate dynamic fields of an object with string deduplication
  */
@@ -253,26 +266,30 @@ async function translateObject(obj, fieldKeys, targetLang = "en", sourceLang = "
 
   const result = Array.isArray(obj) ? [...obj] : { ...obj };
 
-  for (const key of fieldKeys) {
-    if (result[key] !== undefined && result[key] !== null) {
-      if (typeof result[key] === "string") {
-        result[key] = await translateText(result[key], targetLang, sourceLang);
-      } else if (Array.isArray(result[key])) {
-        result[key] = await translateArray(result[key], targetLang, sourceLang);
-      } else if (typeof result[key] === "object") {
-        const nestedKeys = Object.keys(result[key]);
-        const updatedNested = { ...result[key] };
-        for (const nKey of nestedKeys) {
-          if (typeof updatedNested[nKey] === "string") {
-            updatedNested[nKey] = await translateText(updatedNested[nKey], targetLang, sourceLang);
-          } else if (Array.isArray(updatedNested[nKey])) {
-            updatedNested[nKey] = await translateArray(updatedNested[nKey], targetLang, sourceLang);
-          }
+  await Promise.all(
+    fieldKeys.map(async (key) => {
+      if (result[key] !== undefined && result[key] !== null) {
+        if (typeof result[key] === "string") {
+          result[key] = fixMojibake(await translateText(result[key], targetLang, sourceLang));
+        } else if (Array.isArray(result[key])) {
+          result[key] = await translateArray(result[key], targetLang, sourceLang);
+        } else if (typeof result[key] === "object") {
+          const nestedKeys = Object.keys(result[key]);
+          const updatedNested = { ...result[key] };
+          await Promise.all(
+            nestedKeys.map(async (nKey) => {
+              if (typeof updatedNested[nKey] === "string") {
+                updatedNested[nKey] = fixMojibake(await translateText(updatedNested[nKey], targetLang, sourceLang));
+              } else if (Array.isArray(updatedNested[nKey])) {
+                updatedNested[nKey] = await translateArray(updatedNested[nKey], targetLang, sourceLang);
+              }
+            })
+          );
+          result[key] = updatedNested;
         }
-        result[key] = updatedNested;
       }
-    }
-  }
+    })
+  );
 
   return result;
 }
@@ -311,11 +328,30 @@ async function translateMedicine(medicine, targetLang = "en") {
   return translateObject(medicine, fieldsToTranslate, targetLang);
 }
 
+async function translateMedicineSummary(medicine, targetLang = "en") {
+  if (!medicine || targetLang === "en") return medicine;
+  const fields = [
+    "name",
+    "brand",
+    "genericName",
+    "composition",
+    "category",
+    "dosageForm",
+    "form",
+    "strength",
+    "packSize",
+    "shortDescription",
+    "uses",
+  ];
+  return translateObject(medicine, fields, targetLang);
+}
+
 module.exports = {
   translateText,
   translateArray,
   translateObject,
   translateMedicine,
+  translateMedicineSummary,
   SUPPORTED_LANGUAGES,
 };
 

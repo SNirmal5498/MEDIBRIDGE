@@ -14,15 +14,20 @@ export default function MedicineCard({ medicine, compareSelected, onToggleCompar
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
   const { t } = useLanguage();
-  const [favorited, setFavorited] = useState(() => isFavorite(medicine?.id));
+
+  if (!medicine || typeof medicine !== "object") return null;
+
+  const medId = medicine.id || medicine._id;
+  const [favorited, setFavorited] = useState(() => isFavorite(medId));
 
   // Single unified localization pipeline
   const loc = useMedicineCardLocalization(medicine);
+  const resolvedId = loc.id || medId;
 
   function handleFavoriteClick(e) {
     e.stopPropagation();
-    if (medicine?.id) {
-      toggleFavorite(medicine.id);
+    if (resolvedId) {
+      toggleFavorite(resolvedId);
       setFavorited((v) => !v);
     }
   }
@@ -119,7 +124,7 @@ export default function MedicineCard({ medicine, compareSelected, onToggleCompar
 
       <div className="mt-auto pt-4">
         <div className="flex gap-2">
-          <Button variant="primary" size="sm" className="flex-1" onClick={() => navigate(`/medicine/${loc.id}`)}>
+          <Button variant="primary" size="sm" className="flex-1" onClick={() => navigate(`/medicine/${resolvedId}`)}>
             {t("medicine.viewDetails")}
           </Button>
           <Button
@@ -128,7 +133,7 @@ export default function MedicineCard({ medicine, compareSelected, onToggleCompar
             icon={GitCompare}
             className="flex-1"
             disabled={!compareSelected && compareDisabled}
-            onClick={() => onToggleCompare && onToggleCompare(loc.id)}
+            onClick={() => onToggleCompare && onToggleCompare(resolvedId)}
           >
             {compareSelected ? t("medicine.selected") : t("medicine.compare")}
           </Button>
