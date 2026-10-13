@@ -1,6 +1,11 @@
+const mongoose = require("mongoose");
 const Pharmacy = require("../models/Pharmacy");
 const Inventory = require("../models/Inventory");
 const Medicine = require("../models/Medicine");
+
+function escapeRegex(text) {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+}
 
 // Seed initial pharmacies if database is empty
 async function ensureSeedPharmacies() {
@@ -270,12 +275,31 @@ const getMedicineAvailability = async (req, res) => {
     const { medicineId } = req.params;
     const { lat, lng } = req.query;
 
-    const targetMedicine = await Medicine.findOne({ id: medicineId }).lean();
+    const conditions = [{ id: medicineId }];
+    if (mongoose.Types.ObjectId.isValid(medicineId)) {
+      conditions.push({ _id: medicineId });
+    }
+    let targetMedicine = await Medicine.findOne({ $or: conditions }).lean();
+    if (!targetMedicine && medicineId) {
+      const safeId = escapeRegex(medicineId.trim());
+      targetMedicine = await Medicine.findOne({
+        isActive: true,
+        $or: [
+          { id: new RegExp(`^${safeId}$`, "i") },
+          { id: new RegExp(`^${safeId}-`, "i") },
+        ],
+      }).lean();
+    }
+
     if (!targetMedicine) {
       return res.status(404).json({ success: false, message: "Medicine not found in catalog" });
     }
 
-    const inventoryRecords = await Inventory.find({ medicineId, stock: { $gt: 0 } }).lean();
+    const resolvedMedId = targetMedicine.id;
+    const inventoryRecords = await Inventory.find({
+      $or: [{ medicineId: resolvedMedId }, { medicineId }],
+      stock: { $gt: 0 },
+    }).lean();
     const pharmacyIds = inventoryRecords.map((inv) => inv.pharmacyId);
     const pharmacies = await Pharmacy.find({ id: { $in: pharmacyIds }, isActive: true, approvalStatus: "approved" }).lean();
 

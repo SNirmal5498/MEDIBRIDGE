@@ -11,6 +11,7 @@ import {
   Plus,
   CheckCircle,
   XCircle,
+  X,
   Search,
   Eye,
   ShieldAlert,
@@ -34,6 +35,7 @@ import { useAuth } from "../../context/AuthContext";
 import adminService from "../../services/adminService";
 import medicineService from "../../services/medicineService";
 import Button from "../../components/common/Button";
+import PrescriptionDocumentModal from "../../components/prescription/PrescriptionDocumentModal";
 
 const DEFAULT_PHARMACY_FORM = {
   id: "",
@@ -89,6 +91,7 @@ export default function Admin({ tab }) {
 
   // Modals & Action States
   const [selectedPrescription, setSelectedPrescription] = useState(null);
+  const [viewingRx, setViewingRx] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [medicineModalOpen, setMedicineModalOpen] = useState(false);
   const [pharmacyModalOpen, setPharmacyModalOpen] = useState(false);
@@ -259,7 +262,7 @@ export default function Admin({ tab }) {
       );
       setSelectedPrescription(null);
       setRejectionReason("");
-    } catch (err) {
+    } catch {
       alert("Failed to update prescription");
     }
   };
@@ -271,7 +274,7 @@ export default function Admin({ tab }) {
       setUsersList((prev) =>
         prev.map((u) => (u._id === userId ? { ...u, accountStatus: nextStatus } : u))
       );
-    } catch (err) {
+    } catch {
       alert("Failed to update user status");
     }
   };
@@ -298,7 +301,7 @@ export default function Admin({ tab }) {
         prescriptionRequired: false,
         description: "",
       });
-    } catch (err) {
+    } catch {
       alert("Failed to add medicine");
     }
   };
@@ -636,22 +639,8 @@ export default function Admin({ tab }) {
         setToastMessage({ type: "success", text: "Inventory stock & price updated successfully" });
         setTimeout(() => setToastMessage(null), 3000);
       }
-    } catch (err) {
+    } catch {
       setToastMessage({ type: "error", text: "Failed to update inventory" });
-      setTimeout(() => setToastMessage(null), 3000);
-    }
-  };
-
-  const handleModerateReview = async (reviewId, newStatus) => {
-    try {
-      const res = await adminService.moderateReview(reviewId, newStatus);
-      if (res?.success) {
-        setReviewsList((prev) => prev.map((r) => (r._id === reviewId ? { ...r, status: newStatus } : r)));
-        setToastMessage({ type: "success", text: `Review status updated to '${newStatus}'` });
-        setTimeout(() => setToastMessage(null), 3000);
-      }
-    } catch (err) {
-      setToastMessage({ type: "error", text: "Failed to moderate review" });
       setTimeout(() => setToastMessage(null), 3000);
     }
   };
@@ -665,7 +654,7 @@ export default function Admin({ tab }) {
         setToastMessage({ type: "success", text: "Platform Settings saved to MongoDB" });
         setTimeout(() => setSettingsSaved(false), 3000);
       }
-    } catch (err) {
+    } catch {
       setToastMessage({ type: "error", text: "Failed to save platform settings" });
       setTimeout(() => setToastMessage(null), 3000);
     }
@@ -877,10 +866,10 @@ export default function Admin({ tab }) {
                               </span>
                             </td>
                             <td className="p-3.5 text-slate-500 text-[11px]">
-                              {new Date(o.createdAt || Date.now()).toLocaleDateString("en-US", {
+                              {o.createdAt ? new Date(o.createdAt).toLocaleDateString("en-US", {
                                 month: "short",
                                 day: "numeric",
-                              })}
+                              }) : "-"}
                             </td>
                           </tr>
                         ))}
@@ -1784,7 +1773,7 @@ export default function Admin({ tab }) {
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 mt-1">
-                        Placed on {new Date(selectedOrderDetails.createdAt || Date.now()).toLocaleString()}
+                        Placed on {selectedOrderDetails.createdAt ? new Date(selectedOrderDetails.createdAt).toLocaleString() : "Recently"}
                       </p>
                     </div>
                     <button
@@ -1974,7 +1963,7 @@ export default function Admin({ tab }) {
                       variant="secondary"
                       size="sm"
                       icon={Eye}
-                      onClick={() => window.open(`http://localhost:5000/api/prescriptions/${rx._id}/file`, "_blank")}
+                      onClick={() => setViewingRx(rx)}
                     >
                       View File
                     </Button>
@@ -2965,7 +2954,7 @@ export default function Admin({ tab }) {
                     {selectedHistoryModal.adjustmentHistory.map((h, index) => (
                       <tr key={index} className="hover:bg-slate-50">
                         <td className="p-2.5 font-mono text-[11px] text-slate-600">
-                          {new Date(h.date || Date.now()).toLocaleString()}
+                          {h.date ? new Date(h.date).toLocaleString() : "-"}
                         </td>
                         <td className="p-2.5 font-bold text-slate-700">{h.oldStock ?? "-"}</td>
                         <td className="p-2.5 font-bold text-slate-900">{h.newStock ?? "-"}</td>
@@ -3076,6 +3065,14 @@ export default function Admin({ tab }) {
           </div>
         </div>
       )}
+
+      {/* Prescription Document Secure Viewer Modal */}
+      <PrescriptionDocumentModal
+        isOpen={Boolean(viewingRx)}
+        prescriptionId={viewingRx?._id}
+        title={viewingRx ? `Prescription - ${viewingRx.user?.name || "Patient"}` : "Prescription Document"}
+        onClose={() => setViewingRx(null)}
+      />
     </div>
   );
 }

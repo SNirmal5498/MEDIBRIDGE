@@ -37,6 +37,28 @@ function AdminRoute({ children }) {
   return children;
 }
 
+function CustomerRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="p-10 text-center text-text-muted">Loading...</div>;
+  if (user && (user.role === "pharmacy_owner" || user.role === "pharmacy_staff")) {
+    return <Navigate to="/pharmacy-owner" replace />;
+  }
+  return children;
+}
+
+function ProfileRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="p-10 text-center text-text-muted">Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role === "pharmacy_owner" || user.role === "pharmacy_staff") {
+    return <Navigate to="/pharmacy-owner?tab=profile" replace />;
+  }
+  if (user.role === "admin") {
+    return <Navigate to="/admin/profile" replace />;
+  }
+  return children;
+}
+
 function PharmacyOwnerRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="p-10 text-center text-text-muted">Loading...</div>;
@@ -51,20 +73,20 @@ export default function AppRoutes() {
       {/* Customer Storefront Routes */}
       <Route element={<MainLayout />}>
         {/* Public Routes */}
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<CustomerRoute><Home /></CustomerRoute>} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
         {/* Main Features */}
-        <Route path="/medicine" element={<Medicine />} />
-        <Route path="/medicine/:id" element={<MedicineDetails />} />
-        <Route path="/medicines" element={<Navigate to="/medicine" replace />} />
-        <Route path="/medicines/:id" element={<MedicineDetails />} />
-        <Route path="/compare" element={<Compare />} />
-        <Route path="/compare-medicines" element={<Navigate to="/compare" replace />} />
-        <Route path="/pharmacy" element={<Pharmacy />} />
-        <Route path="/pharmacies" element={<Navigate to="/pharmacy" replace />} />
-        <Route path="/emergency" element={<Emergency />} />
+        <Route path="/medicine" element={<CustomerRoute><Medicine /></CustomerRoute>} />
+        <Route path="/medicine/:id" element={<CustomerRoute><MedicineDetails /></CustomerRoute>} />
+        <Route path="/medicines" element={<CustomerRoute><Navigate to="/medicine" replace /></CustomerRoute>} />
+        <Route path="/medicines/:id" element={<CustomerRoute><MedicineDetails /></CustomerRoute>} />
+        <Route path="/compare" element={<CustomerRoute><Compare /></CustomerRoute>} />
+        <Route path="/compare-medicines" element={<CustomerRoute><Navigate to="/compare" replace /></CustomerRoute>} />
+        <Route path="/pharmacy" element={<CustomerRoute><Pharmacy /></CustomerRoute>} />
+        <Route path="/pharmacies" element={<CustomerRoute><Navigate to="/pharmacy" replace /></CustomerRoute>} />
+        <Route path="/emergency" element={<CustomerRoute><Emergency /></CustomerRoute>} />
 
         {/* Pharmacy Owner Portal */}
         <Route
@@ -80,42 +102,50 @@ export default function AppRoutes() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
+            <CustomerRoute>
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            </CustomerRoute>
           }
         />
-        <Route path="/cart" element={<Cart />} />
+        <Route path="/cart" element={<CustomerRoute><Cart /></CustomerRoute>} />
         <Route
           path="/checkout"
           element={
-            <ProtectedRoute>
-              <Checkout />
-            </ProtectedRoute>
+            <CustomerRoute>
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            </CustomerRoute>
           }
         />
         <Route
           path="/orders"
           element={
-            <ProtectedRoute>
-              <Orders />
-            </ProtectedRoute>
+            <CustomerRoute>
+              <ProtectedRoute>
+                <Orders />
+              </ProtectedRoute>
+            </CustomerRoute>
           }
         />
         <Route
           path="/favorites"
           element={
-            <ProtectedRoute>
-              <Favorites />
-            </ProtectedRoute>
+            <CustomerRoute>
+              <ProtectedRoute>
+                <Favorites />
+              </ProtectedRoute>
+            </CustomerRoute>
           }
         />
         <Route
           path="/profile"
           element={
-            <ProtectedRoute>
+            <ProfileRoute>
               <Profile />
-            </ProtectedRoute>
+            </ProfileRoute>
           }
         />
 

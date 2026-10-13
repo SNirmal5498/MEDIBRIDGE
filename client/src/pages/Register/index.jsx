@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { User, Mail, Lock, Eye, EyeOff, UserPlus } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
@@ -6,9 +6,22 @@ import { useLanguage } from "../../context/LanguageContext";
 import Button from "../../components/common/Button";
 
 export default function Register() {
-  const { register } = useAuth();
+  const { user, register } = useAuth();
   const navigate = useNavigate();
   const { t } = useLanguage();
+
+  // If already logged in, redirect directly to role-appropriate portal
+  useEffect(() => {
+    if (user) {
+      if (user.role === "admin") {
+        navigate("/admin", { replace: true });
+      } else if (user.role === "pharmacy_owner" || user.role === "pharmacy_staff") {
+        navigate("/pharmacy-owner", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+    }
+  }, [user, navigate]);
 
   const [form, setForm] = useState({
     name: "",

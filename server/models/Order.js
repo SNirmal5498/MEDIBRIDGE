@@ -8,6 +8,13 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
+    prescription: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Prescription",
+      default: null,
+      index: true,
+    },
+
     orderId: {
       type: String,
       required: true,

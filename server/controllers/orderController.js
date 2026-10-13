@@ -14,6 +14,7 @@ function serializeOrder(order) {
     id: order.orderId,
     _id: order._id,
     user: order.user,
+    prescription: order.prescription || null,
     items: order.items.map((item) => ({
       medicineId: item.medicineId,
       name: `${item.medicineName} (${item.genericName} ${item.strength})`,

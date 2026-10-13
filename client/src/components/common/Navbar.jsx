@@ -28,6 +28,7 @@ export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
+
   const [langOpen, setLangOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -43,16 +44,21 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const links = isAuthenticated ? [...NAV_LINKS, ...AUTH_NAV_LINKS] : NAV_LINKS;
+  const isPharmacyUser = Boolean(
+    user && (user.role === "pharmacy_owner" || user.role === "pharmacy_staff")
+  );
+
+  const customerLinks = isAuthenticated ? [...NAV_LINKS, ...AUTH_NAV_LINKS] : NAV_LINKS;
 
   function handleLogout() {
     logout();
     setUserMenuOpen(false);
-    navigate("/");
+    navigate("/login");
   }
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-border">
+      {/* Admin Notice Bar */}
       {user?.role === "admin" && (
         <div className="bg-slate-900 text-white text-xs px-4 py-2 flex items-center justify-between border-b border-slate-800">
           <span className="flex items-center gap-2 font-medium">
@@ -67,102 +73,129 @@ export default function Navbar() {
           </NavLink>
         </div>
       )}
-      {["pharmacy_owner", "pharmacy_staff"].includes(user?.role) && (
-        <div className="bg-teal-950 text-teal-100 text-xs px-4 py-2 flex items-center justify-between border-b border-teal-900">
-          <span className="flex items-center gap-2 font-medium">
-            <Building2 className="w-4 h-4 text-teal-400 shrink-0" />
-            <span>Pharmacy Portal Active — Logged in as {user?.role?.replace("_", " ")?.toUpperCase()}.</span>
-          </span>
-          <NavLink
-            to="/pharmacy-owner"
-            className="font-bold text-xs bg-teal-600 hover:bg-teal-500 text-white px-3 py-1 rounded-md transition-colors flex items-center gap-1 shrink-0"
-          >
-            Open Pharmacy Portal &rarr;
-          </NavLink>
-        </div>
-      )}
+
+      {/* Main Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-18 py-3 gap-4">
-          {/* Logo */}
-          <NavLink to="/" className="flex items-center gap-2.5 shrink-0">
-            <span className="grid place-items-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-hover text-white shadow-card">
-              <Pill className="w-5 h-5" />
+          {/* Logo / Brand Link */}
+          <NavLink
+            to={isPharmacyUser ? "/pharmacy-owner" : "/"}
+            className="flex items-center gap-2.5 shrink-0"
+          >
+            <span
+              className={`grid place-items-center w-10 h-10 rounded-xl text-white shadow-card ${
+                isPharmacyUser
+                  ? "bg-gradient-to-br from-teal-600 to-teal-800"
+                  : "bg-gradient-to-br from-primary to-primary-hover"
+              }`}
+            >
+              {isPharmacyUser ? <Building2 className="w-5 h-5" /> : <Pill className="w-5 h-5" />}
             </span>
-            <span className="font-display font-extrabold text-lg text-text tracking-tight">
-              Medi<span className="text-primary">Bridge</span>
-            </span>
-          </NavLink>
-
-          {/* Desktop nav */}
-          <nav className="hidden lg:flex items-center gap-1">
-            {links.map((link) => {
-              const Icon = ICONS[link.icon];
-              return (
-                <NavLink
-                  key={link.path}
-                  to={link.path}
-                  className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors duration-150
-                    ${isActive ? "bg-primary-50 text-primary-hover" : "text-text-muted hover:text-text hover:bg-slate-100"}`
-                  }
-                >
-                  <Icon className="w-4 h-4" />
-                  {t(link.labelKey)}
-                </NavLink>
-              );
-            })}
-          </nav>
-
-          {/* Right cluster */}
-          <div className="hidden md:flex items-center gap-3 shrink-0">
-            <div className="relative" ref={langRef}>
-              <button
-                onClick={() => setLangOpen((v) => !v)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-sm font-medium text-text-muted hover:text-text hover:border-primary/40 transition-colors"
-              >
-                <Globe className="w-4 h-4" />
-                {language.label}
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
-              {langOpen && (
-                <div className="absolute right-0 mt-2 w-40 py-1.5 card z-10">
-                  {LANGUAGES.map((l) => (
-                    <button
-                      key={l.code}
-                      onClick={() => {
-                        setLanguage(l);
-                        setLangOpen(false);
-                      }}
-                      className={`w-full text-left px-3.5 py-2 text-sm hover:bg-primary-50 transition-colors
-                        ${l.code === language.code ? "text-primary-hover font-semibold" : "text-text"}`}
-                    >
-                      {l.label}
-                    </button>
-                  ))}
-                </div>
+            <div className="flex flex-col">
+              <span className="font-display font-extrabold text-lg text-text tracking-tight leading-none">
+                Medi<span className={isPharmacyUser ? "text-teal-600" : "text-primary"}>Bridge</span>
+              </span>
+              {isPharmacyUser && (
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-700 font-sans mt-0.5">
+                  Pharmacy Portal
+                </span>
               )}
             </div>
+          </NavLink>
 
+          {/* Desktop Nav - Only shown for customer / storefront navigation */}
+          {!isPharmacyUser && (
+            <nav className="hidden lg:flex items-center gap-1">
+              {customerLinks.map((link) => {
+                const Icon = ICONS[link.icon];
+                return (
+                  <NavLink
+                    key={link.path}
+                    to={link.path}
+                    className={({ isActive }) =>
+                      `flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors duration-150
+                      ${isActive ? "bg-primary-50 text-primary-hover" : "text-text-muted hover:text-text hover:bg-slate-100"}`
+                    }
+                  >
+                    <Icon className="w-4 h-4" />
+                    {t(link.labelKey)}
+                  </NavLink>
+                );
+              })}
+            </nav>
+          )}
+
+          {/* Right Cluster */}
+          <div className={`items-center gap-3 shrink-0 ${isPharmacyUser ? "flex" : "hidden md:flex"}`}>
+            {/* Language Selector - Hidden for Pharmacy Owner Portal */}
+            {!isPharmacyUser && (
+              <div className="relative" ref={langRef}>
+                <button
+                  onClick={() => setLangOpen((v) => !v)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-sm font-medium text-text-muted hover:text-text hover:border-primary/40 transition-colors"
+                >
+                  <Globe className="w-4 h-4" />
+                  {language.label}
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+                {langOpen && (
+                  <div className="absolute right-0 mt-2 w-40 py-1.5 card z-10">
+                    {LANGUAGES.map((l) => (
+                      <button
+                        key={l.code}
+                        onClick={() => {
+                          setLanguage(l);
+                          setLangOpen(false);
+                        }}
+                        className={`w-full text-left px-3.5 py-2 text-sm hover:bg-primary-50 transition-colors
+                          ${l.code === language.code ? "text-primary-hover font-semibold" : "text-text"}`}
+                      >
+                        {l.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Authenticated User Menu */}
             {isAuthenticated ? (
-              <div className="relative pl-3 border-l border-border" ref={userMenuRef}>
+              <div className={`relative ${!isPharmacyUser ? "pl-3 border-l border-border" : ""}`} ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen((v) => !v)}
                   className="flex items-center gap-2 rounded-lg hover:bg-slate-100 pr-2 py-1 transition-colors"
                 >
-                  <div className="grid place-items-center w-9 h-9 rounded-full bg-primary-100 text-primary-hover font-semibold text-sm shrink-0">
+                  <div
+                    className={`grid place-items-center w-9 h-9 rounded-full font-semibold text-sm shrink-0 ${
+                      isPharmacyUser
+                        ? "bg-teal-100 text-teal-800"
+                        : "bg-primary-100 text-primary-hover"
+                    }`}
+                  >
                     {user?.name?.[0]?.toUpperCase() ?? "U"}
                   </div>
-                  <div className="hidden lg:block leading-tight text-left">
+                  <div className="hidden sm:block leading-tight text-left">
                     <p className="text-sm font-semibold text-text">{user?.name ?? "User"}</p>
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-primary-hover bg-primary-50 px-1.5 py-0.5 rounded">
-                      {user?.role ?? "User"}
+                    <span
+                      className={`text-[10px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded ${
+                        isPharmacyUser
+                          ? "bg-teal-50 text-teal-700"
+                          : "bg-primary-50 text-primary-hover"
+                      }`}
+                    >
+                      {user?.role?.replace("_", " ") ?? "User"}
                     </span>
                   </div>
-                  <ChevronDown className={`w-4 h-4 text-text-muted shrink-0 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown
+                    className={`w-4 h-4 text-text-muted shrink-0 transition-transform ${
+                      userMenuOpen ? "rotate-180" : ""
+                    }`}
+                  />
                 </button>
 
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-52 py-1.5 card z-10">
+                  <div className="absolute right-0 mt-2 w-56 py-1.5 card z-10 shadow-xl border border-border">
+                    {/* Admin Shortcut */}
                     {user?.role === "admin" && (
                       <NavLink
                         to="/admin"
@@ -176,48 +209,70 @@ export default function Navbar() {
                         Admin Dashboard
                       </NavLink>
                     )}
-                    {["pharmacy_owner", "pharmacy_staff"].includes(user?.role) && (
-                      <NavLink
-                        to="/pharmacy-owner"
-                        onClick={() => setUserMenuOpen(false)}
-                        className={({ isActive }) =>
-                          `flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-bold transition-colors
-                          ${isActive ? "text-teal-600 bg-teal-50" : "text-teal-700 hover:bg-teal-50"}`
-                        }
-                      >
-                        <Building2 className="w-4 h-4 text-teal-600" />
-                        Pharmacy Portal
-                      </NavLink>
+
+                    {/* Pharmacy Owner Menu Items */}
+                    {isPharmacyUser ? (
+                      <>
+                        <NavLink
+                          to="/pharmacy-owner?tab=overview"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-bold text-teal-800 hover:bg-teal-50 transition-colors"
+                        >
+                          <Building2 className="w-4 h-4 text-teal-600" />
+                          Pharmacy Portal
+                        </NavLink>
+                        <NavLink
+                          to="/pharmacy-owner?tab=profile"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3.5 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          <Building2 className="w-4 h-4 text-slate-500" />
+                          Pharmacy Profile
+                        </NavLink>
+                        <NavLink
+                          to="/pharmacy-owner?tab=inventory"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3.5 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          <Package className="w-4 h-4 text-slate-500" />
+                          Stock Inventory
+                        </NavLink>
+                      </>
+                    ) : (
+                      /* Customer Menu Items */
+                      <>
+                        <NavLink
+                          to="/profile"
+                          onClick={() => setUserMenuOpen(false)}
+                          className={({ isActive }) =>
+                            `flex items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors
+                            ${isActive ? "text-primary-hover font-semibold bg-primary-50" : "text-text hover:bg-primary-50"}`
+                          }
+                        >
+                          <User className="w-4 h-4" />
+                          {t("nav.profile")}
+                        </NavLink>
+                        <NavLink
+                          to="/favorites"
+                          onClick={() => setUserMenuOpen(false)}
+                          className={({ isActive }) =>
+                            `flex items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors
+                            ${isActive ? "text-primary-hover font-semibold bg-primary-50" : "text-text hover:bg-primary-50"}`
+                          }
+                        >
+                          <Heart className="w-4 h-4" />
+                          {t("nav.myMedications")}
+                        </NavLink>
+                      </>
                     )}
-                    <NavLink
-                      to="/profile"
-                      onClick={() => setUserMenuOpen(false)}
-                      className={({ isActive }) =>
-                        `flex items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors
-                        ${isActive ? "text-primary-hover font-semibold bg-primary-50" : "text-text hover:bg-primary-50"}`
-                      }
-                    >
-                      <User className="w-4 h-4" />
-                      {t("nav.profile")}
-                    </NavLink>
-                    <NavLink
-                      to="/favorites"
-                      onClick={() => setUserMenuOpen(false)}
-                      className={({ isActive }) =>
-                        `flex items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors
-                        ${isActive ? "text-primary-hover font-semibold bg-primary-50" : "text-text hover:bg-primary-50"}`
-                      }
-                    >
-                      <Heart className="w-4 h-4" />
-                      {t("nav.myMedications")}
-                    </NavLink>
+
                     <div className="my-1.5 border-t border-border" />
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-danger hover:bg-danger-50 transition-colors"
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-bold text-danger hover:bg-danger-50 transition-colors"
                     >
                       <LogOut className="w-4 h-4" />
-                      {t("nav.logout")}
+                      {t("nav.logout") || "Logout"}
                     </button>
                   </div>
                 )}
@@ -234,21 +289,23 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile toggle */}
-          <button
-            className="md:hidden p-2 rounded-lg text-text hover:bg-slate-100"
-            onClick={() => setMobileOpen((v) => !v)}
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          {/* Mobile Toggle */}
+          {!isPharmacyUser && (
+            <button
+              className="md:hidden p-2 rounded-lg text-text hover:bg-slate-100"
+              onClick={() => setMobileOpen((v) => !v)}
+              aria-label="Toggle menu"
+            >
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Mobile drawer */}
-      {mobileOpen && (
-        <div className="md:hidden border-t border-border bg-white px-4 py-4 space-y-1">
-          {links.map((link) => {
+      {/* Mobile Drawer */}
+      {!isPharmacyUser && mobileOpen && (
+        <div className="md:hidden border-t border-border bg-white px-4 py-4 space-y-1 shadow-lg">
+          {customerLinks.map((link) => {
             const Icon = ICONS[link.icon];
             return (
               <NavLink
@@ -299,14 +356,14 @@ export default function Navbar() {
                 onClick={() => {
                   logout();
                   setMobileOpen(false);
-                  navigate("/");
+                  navigate("/login");
                 }}
                 variant="danger"
                 size="sm"
                 icon={LogOut}
                 className="w-full"
               >
-                {t("nav.logout")}
+                {t("nav.logout") || "Logout"}
               </Button>
             ) : (
               <>

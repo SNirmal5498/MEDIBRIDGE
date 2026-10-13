@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { User } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
@@ -8,6 +8,7 @@ import ProfileHeader from "../../components/profile/ProfileHeader";
 import PersonalInformation from "../../components/profile/PersonalInformation";
 import AccountInformation from "../../components/profile/AccountInformation";
 import RecentOrders from "../../components/profile/RecentOrders";
+import MyPrescriptions from "../../components/prescription/MyPrescriptions";
 import SavedMedicines from "../../components/profile/SavedMedicines";
 import SavedPharmacies from "../../components/profile/SavedPharmacies";
 import AccountSettings, { ChangePasswordModal } from "../../components/profile/AccountSettings";
@@ -32,13 +33,8 @@ export default function Profile() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
-  const [medicines, setMedicines] = useState([]);
-  const [pharmacies, setPharmacies] = useState([]);
-
-  useEffect(() => {
-    setMedicines(getFavoriteMedicines());
-    setPharmacies(getSavedPharmacies());
-  }, []);
+  const [medicines, setMedicines] = useState(() => getFavoriteMedicines());
+  const [pharmacies, setPharmacies] = useState(() => getSavedPharmacies());
 
   function startEdit() {
     setEditing(true);
@@ -144,6 +140,10 @@ export default function Profile() {
 
       <div className="mt-10">
         <RecentOrders />
+      </div>
+
+      <div className="mt-10">
+        <MyPrescriptions />
       </div>
 
       <div className="mt-10">

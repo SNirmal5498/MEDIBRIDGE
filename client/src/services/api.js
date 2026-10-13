@@ -1,12 +1,19 @@
 import axios from "axios";
 
-const baseURL =
-  typeof import.meta !== "undefined" && import.meta?.env?.VITE_API_BASE_URL
-    ? import.meta.env.VITE_API_BASE_URL
-    : "http://localhost:5000/api";
+const getApiBaseUrl = () => {
+  if (typeof import.meta !== "undefined" && import.meta?.env?.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  if (typeof window !== "undefined" && window.location?.hostname) {
+    return `http://${window.location.hostname}:5000/api`;
+  }
+  return "http://localhost:5000/api";
+};
+
+export const API_BASE_URL = getApiBaseUrl();
 
 const api = axios.create({
-  baseURL,
+  baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -21,7 +28,7 @@ api.interceptors.request.use((config) => {
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
-  } catch (e) {
+  } catch {
     // Ignore storage errors in non-browser env
   }
   return config;
@@ -36,7 +43,7 @@ api.interceptors.response.use(
         localStorage.removeItem("medibridge_token");
         localStorage.removeItem("medibridge_user");
       }
-    } catch (e) {
+    } catch {
       // Ignore storage errors in non-browser env
     }
     return Promise.reject(error);

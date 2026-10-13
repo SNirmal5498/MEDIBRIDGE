@@ -8,6 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../hooks/useLanguage";
 import pharmacyService from "../../services/pharmacyService";
 import { useMedicineCardLocalization } from "../../hooks/useMedicineCardLocalization";
+import { getMedicineDetailsPath } from "../../utils/routeHelpers";
 
 export default function MedicineCard({ medicine, compareSelected, onToggleCompare, compareDisabled }) {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ export default function MedicineCard({ medicine, compareSelected, onToggleCompar
 
   // Single unified localization pipeline
   const loc = useMedicineCardLocalization(medicine);
-  const resolvedId = loc.id || medId;
+  const resolvedId = medicine.id || medicine._id || loc.id || medId;
 
   function handleFavoriteClick(e) {
     e.stopPropagation();
@@ -124,7 +125,7 @@ export default function MedicineCard({ medicine, compareSelected, onToggleCompar
 
       <div className="mt-auto pt-4">
         <div className="flex gap-2">
-          <Button variant="primary" size="sm" className="flex-1" onClick={() => navigate(`/medicine/${resolvedId}`)}>
+          <Button variant="primary" size="sm" className="flex-1" onClick={() => navigate(getMedicineDetailsPath(resolvedId))}>
             {t("medicine.viewDetails")}
           </Button>
           <Button

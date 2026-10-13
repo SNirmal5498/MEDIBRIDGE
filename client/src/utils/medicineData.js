@@ -640,7 +640,16 @@ export function getAllMedicines() {
 }
 
 export function getMedicineById(id) {
-  return MEDICINES.find((m) => m.id === id) || null;
+  if (!id) return null;
+  const clean = String(id).toLowerCase().trim();
+  return (
+    MEDICINES.find(
+      (m) =>
+        m.id.toLowerCase() === clean ||
+        clean.startsWith(m.id.toLowerCase() + "-") ||
+        m.id.toLowerCase().startsWith(clean + "-")
+    ) || null
+  );
 }
 
 export function getAlternatives(medicine) {

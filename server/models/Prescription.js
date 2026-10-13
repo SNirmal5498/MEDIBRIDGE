@@ -19,6 +19,27 @@ const prescriptionSchema = new mongoose.Schema(
       default: "",
       index: true,
     },
+    pharmacyName: {
+      type: String,
+      default: "",
+    },
+    medicineId: {
+      type: String,
+      default: "",
+      index: true,
+    },
+    medicineName: {
+      type: String,
+      default: "",
+    },
+    customerNotes: {
+      type: String,
+      default: "",
+    },
+    originalName: {
+      type: String,
+      default: "",
+    },
     filename: {
       type: String,
       required: true,

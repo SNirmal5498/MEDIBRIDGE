@@ -133,7 +133,19 @@ const getMedicineById = async (req, res) => {
       conditions.push({ _id: id });
     }
 
-    const medicine = await Medicine.findOne({ $or: conditions }).lean();
+    let medicine = await Medicine.findOne({ $or: conditions }).lean();
+
+    if (!medicine && id) {
+      const safeId = escapeRegex(id.trim());
+      medicine = await Medicine.findOne({
+        isActive: true,
+        $or: [
+          { id: new RegExp(`^${safeId}$`, "i") },
+          { id: new RegExp(`^${safeId}-`, "i") },
+          { brand: new RegExp(`^${safeId}$`, "i") },
+        ],
+      }).lean();
+    }
 
     if (!medicine) {
       return res.status(404).json({
@@ -170,7 +182,19 @@ const getAlternatives = async (req, res) => {
       conditions.push({ _id: id });
     }
 
-    const medicine = await Medicine.findOne({ $or: conditions }).lean();
+    let medicine = await Medicine.findOne({ $or: conditions }).lean();
+
+    if (!medicine && id) {
+      const safeId = escapeRegex(id.trim());
+      medicine = await Medicine.findOne({
+        isActive: true,
+        $or: [
+          { id: new RegExp(`^${safeId}$`, "i") },
+          { id: new RegExp(`^${safeId}-`, "i") },
+          { brand: new RegExp(`^${safeId}$`, "i") },
+        ],
+      }).lean();
+    }
 
     if (!medicine) {
       return res.status(404).json({
@@ -276,10 +300,14 @@ const compareMedicines = async (req, res) => {
     const conditions = ids.flatMap((id) => {
       const match = [{ id }];
       if (mongoose.Types.ObjectId.isValid(id)) match.push({ _id: id });
+      const safeId = escapeRegex(String(id).trim());
+      match.push({ id: new RegExp(`^${safeId}$`, "i") });
+      match.push({ id: new RegExp(`^${safeId}-`, "i") });
+      match.push({ brand: new RegExp(`^${safeId}$`, "i") });
       return match;
     });
 
-    const medicines = await Medicine.find({ $or: conditions }).lean();
+    const medicines = await Medicine.find({ $or: conditions, isActive: true }).lean();
 
     const lang = (req.query.lang || "en").toLowerCase();
     let finalMedicines = medicines;

@@ -7,6 +7,7 @@ import FilterSortBar from "../../components/medicine/FilterSortBar";
 import MedicineCard from "../../components/medicine/MedicineCard";
 import Button from "../../components/common/Button";
 import { useLanguage } from "../../hooks/useLanguage";
+import { getMedicineDetailsPath } from "../../utils/routeHelpers";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -170,7 +171,7 @@ export default function Medicine() {
         onSortChange={handleSortChange}
         category={category}
         onCategoryChange={handleCategoryChange}
-        onSelectMedicine={(med) => navigate(`/medicine/${med.id || med._id}`)}
+        onSelectMedicine={(med) => navigate(getMedicineDetailsPath(med))}
       />
 
       {recentlyViewed.length > 0 && (

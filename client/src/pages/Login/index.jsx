@@ -1,14 +1,30 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, LogIn } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { useLanguage } from "../../context/LanguageContext";
 import Button from "../../components/common/Button";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useLanguage();
+
+  const returnTarget = location.state?.returnTo || location.state?.from || "/";
+
+  // If already logged in, redirect directly to role-appropriate portal
+  useEffect(() => {
+    if (user) {
+      if (user.role === "admin") {
+        navigate("/admin", { replace: true });
+      } else if (user.role === "pharmacy_owner" || user.role === "pharmacy_staff") {
+        navigate("/pharmacy-owner", { replace: true });
+      } else {
+        navigate(returnTarget, { replace: true, state: location.state });
+      }
+    }
+  }, [user, navigate, returnTarget, location.state]);
 
   const [form, setForm] = useState({
     email: "",
@@ -35,9 +51,11 @@ export default function Login() {
     try {
       const loggedUser = await login(form);
       if (loggedUser && loggedUser.role === "admin") {
-        navigate("/admin");
+        navigate("/admin", { replace: true });
+      } else if (loggedUser && (loggedUser.role === "pharmacy_owner" || loggedUser.role === "pharmacy_staff")) {
+        navigate("/pharmacy-owner", { replace: true });
       } else {
-        navigate("/");
+        navigate(returnTarget, { replace: true, state: location.state });
       }
     } catch (err) {
       setError(

@@ -10,6 +10,7 @@ import {
   formatStrength,
   formatManufacturer,
 } from "../../utils/formatters";
+import { getMedicineDetailsPath } from "../../utils/routeHelpers";
 
 // Helper to escape regex special characters safely
 function escapeRegex(text) {
@@ -188,12 +189,20 @@ export default function MedicineAutocompleteSearch({
           // Graceful fallback to local results
         }
 
-        // 3. Merge & deduplicate by ID
+        // 3. Merge & deduplicate: prefer live API results for canonical IDs, with local dataset fallback
         const mergedMap = new Map();
-        localResults.forEach((m) => mergedMap.set(m.id || m._id, m));
         apiResults.forEach((m) => {
           const key = m.id || m._id;
-          if (!mergedMap.has(key)) {
+          if (key) mergedMap.set(key, m);
+        });
+
+        const apiBrands = new Set(
+          apiResults.map((m) => (m.brand || m.name || "").toLowerCase().trim())
+        );
+        localResults.forEach((m) => {
+          const key = m.id || m._id;
+          const brandKey = (m.brand || m.name || "").toLowerCase().trim();
+          if (key && !mergedMap.has(key) && !apiBrands.has(brandKey)) {
             mergedMap.set(key, m);
           }
         });
@@ -255,7 +264,7 @@ export default function MedicineAutocompleteSearch({
       onSelect(med);
     } else {
       // Default behavior: navigate to medicine details
-      navigate(`/medicine/${med.id || med._id}`);
+      navigate(getMedicineDetailsPath(med.id || med._id));
     }
   };
 

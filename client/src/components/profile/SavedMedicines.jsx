@@ -4,6 +4,7 @@ import Button from "../common/Button";
 import { formatINR } from "../../utils/helpers";
 import { useLanguage } from "../../hooks/useLanguage";
 import { formatBrandName, formatGenericName, formatStrength } from "../../utils/formatters";
+import { getMedicineDetailsPath } from "../../utils/routeHelpers";
 
 export default function SavedMedicines({ medicines, onRemove }) {
   const { t, language } = useLanguage();
@@ -56,7 +57,7 @@ export default function SavedMedicines({ medicines, onRemove }) {
                   {formatINR(medicine.price)}
                 </p>
                 <div className="mt-auto pt-4 flex gap-2">
-                  <Button as={Link} to={`/medicine/${medicine.id}`} variant="primary" size="sm" className="flex-1">
+                  <Button as={Link} to={getMedicineDetailsPath(medicine)} variant="primary" size="sm" className="flex-1">
                     {t("medicine.viewDetails")}
                   </Button>
                   <Button

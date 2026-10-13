@@ -47,9 +47,20 @@ router.patch("/prescriptions/:id/review", requireStaffPermission("prescriptions_
 // Catalog Medicine Submissions
 router.post("/catalog-submissions", submitNewMedicine);
 
+// Owner-only middleware for staff management
+const requireOwnerOnly = (req, res, next) => {
+  if (req.user && (req.user.role === "admin" || req.user.role === "pharmacy_owner")) {
+    return next();
+  }
+  return res.status(403).json({
+    success: false,
+    message: "Access denied. Only pharmacy owners can manage staff.",
+  });
+};
+
 // Staff Management (Owner only)
-router.get("/staff", getPharmacyStaff);
-router.post("/staff", addPharmacyStaff);
-router.patch("/staff/:staffId", updateStaffPermissions);
+router.get("/staff", requireOwnerOnly, getPharmacyStaff);
+router.post("/staff", requireOwnerOnly, addPharmacyStaff);
+router.patch("/staff/:staffId", requireOwnerOnly, updateStaffPermissions);
 
 module.exports = router;

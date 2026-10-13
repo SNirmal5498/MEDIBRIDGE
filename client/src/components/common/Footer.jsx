@@ -11,10 +11,12 @@ import {
   FaMapMarkerAlt,
 } from "react-icons/fa";
 import { useLanguage } from "../../hooks/useLanguage";
+import { useAuth } from "../../hooks/useAuth";
 import { formatAddress } from "../../utils/formatters";
 
 export default function Footer() {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
 
   return (
     <footer className="bg-teal-950 text-white mt-20">
@@ -52,10 +54,22 @@ export default function Footer() {
             </h3>
 
             <div className="flex flex-col gap-3 text-gray-300">
-              <Link to="/">{t("nav.home")}</Link>
-              <Link to="/compare">{t("nav.compareMedicines")}</Link>
-              <Link to="/pharmacy">{t("nav.nearbyPharmacy")}</Link>
-              <Link to="/emergency">{t("nav.emergency")}</Link>
+              {["pharmacy_owner", "pharmacy_staff"].includes(user?.role) ? (
+                <>
+                  <Link to="/pharmacy-owner?tab=overview">Portal Overview</Link>
+                  <Link to="/pharmacy-owner?tab=inventory">Stock Inventory</Link>
+                  <Link to="/pharmacy-owner?tab=orders">Customer Orders</Link>
+                  <Link to="/pharmacy-owner?tab=prescriptions">Prescription Review</Link>
+                  <Link to="/pharmacy-owner?tab=profile">Pharmacy Profile</Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/">{t("nav.home")}</Link>
+                  <Link to="/compare">{t("nav.compareMedicines")}</Link>
+                  <Link to="/pharmacy">{t("nav.nearbyPharmacy")}</Link>
+                  <Link to="/emergency">{t("nav.emergency")}</Link>
+                </>
+              )}
             </div>
           </div>
 
